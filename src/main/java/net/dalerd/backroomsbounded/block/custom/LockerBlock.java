@@ -27,16 +27,18 @@ import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.Properties;
 
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.hit.BlockHitResult;
+
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-
-import net.minecraft.util.hit.BlockHitResult;
 
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
+
+import org.jetbrains.annotations.Nullable;
 
 public class LockerBlock extends BlockWithEntity {
 
@@ -83,25 +85,210 @@ public class LockerBlock extends BlockWithEntity {
         );
     }
 
-    // =========================================================
-    // IMPORTANT FIX
-    // =========================================================
-
     @Override
     protected BlockRenderType getRenderType(BlockState state) {
         return BlockRenderType.MODEL;
     }
 
     // =========================================================
+    // PLACEMENT
+    // =========================================================
+
+    @Nullable
+    @Override
+    public BlockState getPlacementState(ItemPlacementContext ctx) {
+
+        BlockPos upPos = ctx.getBlockPos().up();
+
+        if (!ctx.getWorld().getBlockState(upPos).isReplaceable()) {
+            return null;
+        }
+
+        return this.getDefaultState()
+                .with(
+                        FACING,
+                        ctx.getHorizontalPlayerFacing().getOpposite()
+                )
+                .with(HALF, DoubleBlockHalf.LOWER);
+    }
+
+    @Override
+    public void onPlaced(
+            World world,
+            BlockPos pos,
+            BlockState state,
+            LivingEntity placer,
+            ItemStack itemStack
+    ) {
+
+        world.setBlockState(
+                pos.up(),
+                state.with(HALF, DoubleBlockHalf.UPPER),
+                Block.NOTIFY_ALL
+        );
+    }
+
+    // =========================================================
+    // INTERACTION
+    // =========================================================
+
+    @Override
+    protected ActionResult onUse(
+            BlockState state,
+            World world,
+            BlockPos pos,
+            PlayerEntity player,
+            BlockHitResult hit
+    ) {
+
+        if (world.isClient) {
+            return ActionResult.SUCCESS;
+        }
+
+        BlockPos basePos =
+                state.get(HALF) == DoubleBlockHalf.UPPER
+                        ? pos.down()
+                        : pos;
+
+        BlockState baseState = world.getBlockState(basePos);
+
+        boolean open = !baseState.get(OPEN);
+
+        // LOWER HALF
+        world.setBlockState(
+                basePos,
+                baseState.with(OPEN, open),
+                Block.NOTIFY_ALL
+        );
+
+        // UPPER HALF
+        world.setBlockState(
+                basePos.up(),
+                world.getBlockState(basePos.up())
+                        .with(OPEN, open),
+                Block.NOTIFY_ALL
+        );
+
+        world.playSound(
+                null,
+                pos,
+
+                open
+                        ? SoundEvents.BLOCK_IRON_DOOR_OPEN
+                        : SoundEvents.BLOCK_IRON_DOOR_CLOSE,
+
+                SoundCategory.BLOCKS,
+                1.0f,
+                1.0f
+        );
+
+        return ActionResult.SUCCESS;
+    }
+
+    // =========================================================
+    // BREAKING
+    // =========================================================
+
+    @Override
+    public BlockState onBreak(
+            World world,
+            BlockPos pos,
+            BlockState state,
+            PlayerEntity player
+    ) {
+
+        if (!world.isClient) {
+
+            BlockPos otherPos =
+                    state.get(HALF) == DoubleBlockHalf.LOWER
+                            ? pos.up()
+                            : pos.down();
+
+            BlockState otherState =
+                    world.getBlockState(otherPos);
+
+            if (otherState.isOf(this)) {
+
+                world.setBlockState(
+                        otherPos,
+                        Blocks.AIR.getDefaultState(),
+                        Block.NOTIFY_ALL
+                );
+            }
+        }
+
+        return super.onBreak(world, pos, state, player);
+    }
+
+    // =========================================================
+    // BLOCK ENTITY
+    // =========================================================
+
+    @Nullable
+    @Override
+    public BlockEntity createBlockEntity(
+            BlockPos pos,
+            BlockState state
+    ) {
+
+        return state.get(HALF) == DoubleBlockHalf.LOWER
+                ? new LockerBlockEntity(pos, state)
+                : null;
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
+            World world,
+            BlockState state,
+            BlockEntityType<T> type
+    ) {
+
+        return state.get(HALF) == DoubleBlockHalf.LOWER
+                ? validateTicker(
+                type,
+                ModBlockEntities.LOCKER_BE,
+                LockerBlockEntity::tick
+        )
+                : null;
+    }
+
+    // =========================================================
     // SHAPE
     // =========================================================
 
+    @Override
+    protected VoxelShape getOutlineShape(
+            BlockState state,
+            BlockView world,
+            BlockPos pos,
+            ShapeContext context
+    ) {
+
+        return createShape(state);
+    }
+
+    @Override
+    protected VoxelShape getCollisionShape(
+            BlockState state,
+            BlockView world,
+            BlockPos pos,
+            ShapeContext context
+    ) {
+
+        return createShape(state);
+    }
+
     private VoxelShape createShape(BlockState state) {
 
-        boolean open = state.get(OPEN);
-        boolean upper = state.get(HALF) == DoubleBlockHalf.UPPER;
+        boolean open =
+                state.get(OPEN);
 
-        VoxelShape shape = VoxelShapes.empty();
+        boolean upper =
+                state.get(HALF) == DoubleBlockHalf.UPPER;
+
+        VoxelShape shape =
+                VoxelShapes.empty();
 
         // LEFT WALL
         shape = VoxelShapes.union(
@@ -166,242 +353,50 @@ public class LockerBlock extends BlockWithEntity {
             );
         }
 
-        return rotateShape(shape, state.get(FACING));
+        return rotateShape(
+                shape,
+                state.get(FACING)
+        );
     }
 
-    // =========================================================
-    // ROTATION
-    // =========================================================
-
-    private VoxelShape rotateShape(VoxelShape shape, Direction direction) {
+    private VoxelShape rotateShape(
+            VoxelShape shape,
+            Direction direction
+    ) {
 
         VoxelShape[] buffer = new VoxelShape[] {
                 shape,
                 VoxelShapes.empty()
         };
 
-        int times = (direction.getHorizontal() + 4) % 4;
+        int times =
+                (direction.getHorizontal() + 4) % 4;
 
         for (int i = 0; i < times; i++) {
 
             buffer[1] = VoxelShapes.empty();
 
-            buffer[0].forEachBox((minX, minY, minZ, maxX, maxY, maxZ) ->
+            buffer[0].forEachBox(
+                    (minX, minY, minZ, maxX, maxY, maxZ) ->
 
-                    buffer[1] = VoxelShapes.union(
-                            buffer[1],
+                            buffer[1] = VoxelShapes.union(
+                                    buffer[1],
 
-                            VoxelShapes.cuboid(
-                                    1 - maxZ,
-                                    minY,
-                                    minX,
+                                    VoxelShapes.cuboid(
+                                            1 - maxZ,
+                                            minY,
+                                            minX,
 
-                                    1 - minZ,
-                                    maxY,
-                                    maxX
+                                            1 - minZ,
+                                            maxY,
+                                            maxX
+                                    )
                             )
-                    )
             );
 
             buffer[0] = buffer[1];
         }
 
         return buffer[0];
-    }
-
-    // =========================================================
-    // COLLISION
-    // =========================================================
-
-    @Override
-    public VoxelShape getCollisionShape(
-            BlockState state,
-            BlockView world,
-            BlockPos pos,
-            ShapeContext context
-    ) {
-
-        return createShape(state);
-    }
-
-    @Override
-    public VoxelShape getOutlineShape(
-            BlockState state,
-            BlockView world,
-            BlockPos pos,
-            ShapeContext context
-    ) {
-
-        return createShape(state);
-    }
-
-    // =========================================================
-    // PLACEMENT
-    // =========================================================
-
-    @Override
-    public BlockState getPlacementState(ItemPlacementContext ctx) {
-
-        BlockPos up = ctx.getBlockPos().up();
-
-        if (!ctx.getWorld().getBlockState(up).isReplaceable()) {
-            return null;
-        }
-
-        return this.getDefaultState()
-                .with(
-                        FACING,
-                        ctx.getHorizontalPlayerFacing()
-                )
-                .with(HALF, DoubleBlockHalf.LOWER);
-    }
-
-    @Override
-    public void onPlaced(
-            World world,
-            BlockPos pos,
-            BlockState state,
-            LivingEntity placer,
-            ItemStack stack
-    ) {
-
-        world.setBlockState(
-                pos.up(),
-
-                state.with(HALF, DoubleBlockHalf.UPPER),
-
-                Block.NOTIFY_ALL
-        );
-    }
-
-    // =========================================================
-    // BREAKING
-    // =========================================================
-
-    @Override
-    public void onStateReplaced(
-            BlockState state,
-            World world,
-            BlockPos pos,
-            BlockState newState,
-            boolean moved
-    ) {
-
-        if (state.isOf(newState.getBlock())) {
-            return;
-        }
-
-        BlockPos otherPos =
-                state.get(HALF) == DoubleBlockHalf.LOWER
-                        ? pos.up()
-                        : pos.down();
-
-        if (world.getBlockState(otherPos).isOf(this)) {
-
-            world.setBlockState(
-                    otherPos,
-                    Blocks.AIR.getDefaultState(),
-                    Block.NOTIFY_ALL
-            );
-        }
-
-        super.onStateReplaced(
-                state,
-                world,
-                pos,
-                newState,
-                moved
-        );
-    }
-
-    // =========================================================
-    // INTERACTION
-    // =========================================================
-
-    @Override
-    protected ActionResult onUse(
-            BlockState state,
-            World world,
-            BlockPos pos,
-            PlayerEntity player,
-            BlockHitResult hit
-    ) {
-
-        if (world.isClient()) {
-            return ActionResult.SUCCESS;
-        }
-
-        BlockPos basePos =
-                state.get(HALF) == DoubleBlockHalf.UPPER
-                        ? pos.down()
-                        : pos;
-
-        BlockState baseState =
-                world.getBlockState(basePos);
-
-        boolean open =
-                !baseState.get(OPEN);
-
-        // LOWER
-        world.setBlockState(
-                basePos,
-                baseState.with(OPEN, open),
-                Block.NOTIFY_ALL
-        );
-
-        // UPPER
-        world.setBlockState(
-                basePos.up(),
-                world.getBlockState(basePos.up())
-                        .with(OPEN, open),
-                Block.NOTIFY_ALL
-        );
-
-        world.playSound(
-                null,
-                pos,
-
-                open
-                        ? SoundEvents.BLOCK_IRON_DOOR_OPEN
-                        : SoundEvents.BLOCK_IRON_DOOR_CLOSE,
-
-                SoundCategory.BLOCKS,
-
-                1f,
-                1f
-        );
-
-        return ActionResult.SUCCESS;
-    }
-
-    // =========================================================
-    // BLOCK ENTITY
-    // =========================================================
-
-    @Override
-    public BlockEntity createBlockEntity(
-            BlockPos pos,
-            BlockState state
-    ) {
-
-        if (state.get(HALF) == DoubleBlockHalf.UPPER) {
-            return null;
-        }
-
-        return new LockerBlockEntity(pos, state);
-    }
-
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
-            World world,
-            BlockState state,
-            BlockEntityType<T> type
-    ) {
-
-        return validateTicker(
-                type,
-                ModBlockEntities.LOCKER_BE,
-                LockerBlockEntity::tick
-        );
     }
 }
