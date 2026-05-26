@@ -281,55 +281,16 @@ public class LockerBlock extends BlockWithEntity {
 
     private VoxelShape createShape(BlockState state) {
 
-        boolean open =
-                state.get(OPEN);
+        boolean open = state.get(OPEN);
+        boolean upper = state.get(HALF) == DoubleBlockHalf.UPPER;
+        Direction facing = state.get(FACING);
 
-        boolean upper =
-                state.get(HALF) == DoubleBlockHalf.UPPER;
+        VoxelShape shape = VoxelShapes.empty();
 
-        VoxelShape shape =
-                VoxelShapes.empty();
+        // =====================================================
+        // FLOOR / CEILING
+        // =====================================================
 
-        // LEFT WALL
-        shape = VoxelShapes.union(
-                shape,
-                Block.createCuboidShape(
-                        0, 0, 0,
-                        WALL, 16, 16
-                )
-        );
-
-        // RIGHT WALL
-        shape = VoxelShapes.union(
-                shape,
-                Block.createCuboidShape(
-                        16 - WALL, 0, 0,
-                        16, 16, 16
-                )
-        );
-
-        // BACK WALL
-        shape = VoxelShapes.union(
-                shape,
-                Block.createCuboidShape(
-                        0, 0, 16 - WALL,
-                        16, 16, 16
-                )
-        );
-
-        // FRONT DOOR
-        if (!open) {
-
-            shape = VoxelShapes.union(
-                    shape,
-                    Block.createCuboidShape(
-                            0, 0, 0,
-                            16, 16, WALL
-                    )
-            );
-        }
-
-        // FLOOR
         if (!upper) {
 
             shape = VoxelShapes.union(
@@ -340,8 +301,6 @@ public class LockerBlock extends BlockWithEntity {
                     )
             );
         }
-
-        // CEILING
         else {
 
             shape = VoxelShapes.union(
@@ -353,50 +312,98 @@ public class LockerBlock extends BlockWithEntity {
             );
         }
 
-        return rotateShape(
-                shape,
-                state.get(FACING)
-        );
-    }
+        // =====================================================
+        // WALLS
+        // =====================================================
 
-    private VoxelShape rotateShape(
-            VoxelShape shape,
-            Direction direction
-    ) {
+        switch (facing) {
 
-        VoxelShape[] buffer = new VoxelShape[] {
-                shape,
-                VoxelShapes.empty()
-        };
+            case NORTH -> {
 
-        int times =
-                (direction.getHorizontal() + 4) % 4;
+                // left
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(0, 0, 0, WALL, 16, 16));
 
-        for (int i = 0; i < times; i++) {
+                // right
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(16 - WALL, 0, 0, 16, 16, 16));
 
-            buffer[1] = VoxelShapes.empty();
+                // back
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(0, 0, 16 - WALL, 16, 16, 16));
 
-            buffer[0].forEachBox(
-                    (minX, minY, minZ, maxX, maxY, maxZ) ->
+                // front door
+                if (!open) {
+                    shape = VoxelShapes.union(shape,
+                            Block.createCuboidShape(0, 0, 0, 16, 16, WALL));
+                }
+            }
 
-                            buffer[1] = VoxelShapes.union(
-                                    buffer[1],
+            case SOUTH -> {
 
-                                    VoxelShapes.cuboid(
-                                            1 - maxZ,
-                                            minY,
-                                            minX,
+                // left
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(16 - WALL, 0, 0, 16, 16, 16));
 
-                                            1 - minZ,
-                                            maxY,
-                                            maxX
-                                    )
-                            )
-            );
+                // right
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(0, 0, 0, WALL, 16, 16));
 
-            buffer[0] = buffer[1];
+                // back
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(0, 0, 0, 16, 16, WALL));
+
+                // front door
+                if (!open) {
+                    shape = VoxelShapes.union(shape,
+                            Block.createCuboidShape(0, 0, 16 - WALL, 16, 16, 16));
+                }
+            }
+
+            case EAST -> {
+
+                // left
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(0, 0, 0, 16, 16, WALL));
+
+                // right
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(0, 0, 16 - WALL, 16, 16, 16));
+
+                // back
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(0, 0, 0, WALL, 16, 16));
+
+                // front door
+                if (!open) {
+                    shape = VoxelShapes.union(shape,
+                            Block.createCuboidShape(16 - WALL, 0, 0, 16, 16, 16));
+                }
+            }
+
+            case WEST -> {
+
+                // left
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(0, 0, 16 - WALL, 16, 16, 16));
+
+                // right
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(0, 0, 0, 16, 16, WALL));
+
+                // back
+                shape = VoxelShapes.union(shape,
+                        Block.createCuboidShape(16 - WALL, 0, 0, 16, 16, 16));
+
+                // front door
+                if (!open) {
+                    shape = VoxelShapes.union(shape,
+                            Block.createCuboidShape(0, 0, 0, WALL, 16, 16));
+                }
+            }
         }
 
-        return buffer[0];
+        return shape;
     }
+
 }

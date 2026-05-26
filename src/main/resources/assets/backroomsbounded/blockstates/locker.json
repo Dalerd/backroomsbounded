@@ -33,35 +33,29 @@
     },
 
     "facing=north,half=upper,open=false": {
-      "model": "backroomsbounded:block/locker_closed"
+      "model": "minecraft:block/air"
     },
     "facing=south,half=upper,open=false": {
-      "model": "backroomsbounded:block/locker_closed",
-      "y": 180
+      "model": "minecraft:block/air"
     },
     "facing=west,half=upper,open=false": {
-      "model": "backroomsbounded:block/locker_closed",
-      "y": 270
+      "model": "minecraft:block/air"
     },
     "facing=east,half=upper,open=false": {
-      "model": "backroomsbounded:block/locker_closed",
-      "y": 90
+      "model": "minecraft:block/air"
     },
 
     "facing=north,half=upper,open=true": {
-      "model": "backroomsbounded:block/locker_open"
+      "model": "minecraft:block/air"
     },
     "facing=south,half=upper,open=true": {
-      "model": "backroomsbounded:block/locker_open",
-      "y": 180
+      "model": "minecraft:block/air"
     },
     "facing=west,half=upper,open=true": {
-      "model": "backroomsbounded:block/locker_open",
-      "y": 270
+      "model": "minecraft:block/air"
     },
     "facing=east,half=upper,open=true": {
-      "model": "backroomsbounded:block/locker_open",
-      "y": 90
+      "model": "minecraft:block/air"
     }
   }
 }
