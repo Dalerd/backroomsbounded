@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "backroomsbounded",
+	"version": "${version}",
+	"name": "BackroomsBounded",
+	"description": "Backrooms horror mod",
+	"authors": [
+		"Dalerd"
+	],
+	"license": "CC0-1.0",
+	"environment": "*",
+
+	"entrypoints": {
+		"main": [
+			"net.dalerd.backroomsbounded.BackroomsBounded"
+		],
+		"client": [
+			"net.dalerd.backroomsbounded.BackroomsBoundedClient"
+		],
+		"fabric-datagen": [
+			"net.dalerd.backroomsbounded.datagen.ModDataGenerator"
+		]
+	},
+
+	"mixins": [
+	],
+
+	"depends": {
+		"fabricloader": ">=0.16.10",
+		"minecraft": "1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

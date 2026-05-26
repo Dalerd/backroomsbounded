@@ -1,0 +1,24 @@
+{
+  "itemGroup.backroomsbounded.backrooms": "Backrooms Bounded",
+
+  "block.backroomsbounded.backboard_block": "Backboard Block",
+  "block.backroomsbounded.wallpaper_block": "Wallpaper Block",
+  "block.backroomsbounded.stained_wallpaper_block": "Stained Wallpaper Block",
+  "block.backroomsbounded.wet_wallpaper_block": "Wet Wallpaper Block",
+  "block.backroomsbounded.moldy_wallpaper_block": "Moldy Wallpaper Block",
+  "block.backroomsbounded.mold_infected_wallpaper_block": "Mold Infected Wallpaper Block",
+
+  "block.backroomsbounded.torn_wallpaper_block": "Torn Wallpaper Block",
+  "block.backroomsbounded.stained_torn_wallpaper_block": "Stained Torn Wallpaper Block",
+  "block.backroomsbounded.wet_torn_wallpaper_block": "Wet Torn Wallpaper Block",
+  "block.backroomsbounded.moldy_torn_wallpaper_block": "Moldy Torn Wallpaper Block",
+  "block.backroomsbounded.mold_infected_torn_wallpaper_block": "Mold Infected Torn Wallpaper Block",
+
+  "block.backroomsbounded.sponge_wallpaper_block": "Sponge Wallpaper Block",
+
+  "block.backroomsbounded.glitch_block": "Glitch Block",
+
+  "item.backroomsbounded.almond_water": "Almond Water",
+
+  "block.backroomsbounded.water_cooler": "Water Cooler"
+}

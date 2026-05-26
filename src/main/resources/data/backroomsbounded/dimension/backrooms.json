@@ -1,0 +1,14 @@
+{
+  "type": "backroomsbounded:backrooms_type",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "layers": [
+        { "block": "minecraft:bedrock", "height": 1 },
+        { "block": "minecraft:smooth_stone", "height": 3 }
+      ],
+      "biome": "backroomsbounded:backrooms_biome",
+      "structures": { "structures": {} }
+    }
+  }
+}
