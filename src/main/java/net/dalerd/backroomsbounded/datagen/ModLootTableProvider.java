@@ -6,11 +6,18 @@ import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootTableProvider;
 
 import net.minecraft.block.Block;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.item.Items;
+import net.minecraft.loot.LootPool;
 import net.minecraft.loot.LootTable;
+import net.minecraft.loot.condition.MatchToolLootCondition;
+import net.minecraft.loot.entry.AlternativeEntry;
 import net.minecraft.loot.entry.ItemEntry;
 import net.minecraft.loot.function.SetCountLootFunction;
+import net.minecraft.loot.provider.number.ConstantLootNumberProvider;
 import net.minecraft.loot.provider.number.UniformLootNumberProvider;
+import net.minecraft.predicate.item.EnchantmentPredicate;
+import net.minecraft.predicate.item.ItemPredicate;
 import net.minecraft.registry.RegistryWrapper;
 
 import java.util.concurrent.CompletableFuture;
@@ -27,7 +34,7 @@ public class ModLootTableProvider extends FabricBlockLootTableProvider {
     @Override
     public void generate() {
 
-        // =========================
+// =========================
         // NORMAL SELF DROPS
         // =========================
 
@@ -38,31 +45,17 @@ public class ModLootTableProvider extends FabricBlockLootTableProvider {
 
         // =========================
         // LOCKER
-        // Drops 1-4 iron ingots
+        // Silk Touch = locker
+        // Otherwise = 0-5 iron ingots
         // =========================
 
-// =========================
-// LOCKER
-// Drops 1-4 iron ingots
-// =========================
-
-        addDrop(
-                ModBlocks.LOCKER,
-                LootTable.builder().pool(
-                        addSurvivesExplosionCondition(
-                                ModBlocks.LOCKER,
-                                net.minecraft.loot.LootPool.builder()
-                                        .rolls(net.minecraft.loot.provider.number.ConstantLootNumberProvider.create(1))
-                                        .with(
-                                                ItemEntry.builder(Items.IRON_INGOT)
-                                                        .apply(SetCountLootFunction.builder(
-                                                                UniformLootNumberProvider.create(1.0f, 4.0f)
-                                                        ))
-                                        )
-                        )
-                )
+        addDrop(ModBlocks.LOCKER,
+                this.dropsWithSilkTouch(ModBlocks.LOCKER,
+                        this.applyExplosionDecay(ModBlocks.LOCKER,
+                                ItemEntry.builder(Items.IRON_INGOT)
+                                        .apply(SetCountLootFunction.builder(
+                                                UniformLootNumberProvider.create(0.0f, 5.0f)))))
         );
-
         // =========================
         // STAINED / WET
         // Silk Touch = block

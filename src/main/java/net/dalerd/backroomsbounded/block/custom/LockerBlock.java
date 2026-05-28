@@ -199,25 +199,49 @@ public class LockerBlock extends BlockWithEntity {
 
         if (!world.isClient) {
 
-            BlockPos otherPos =
-                    state.get(HALF) == DoubleBlockHalf.LOWER
-                            ? pos.up()
-                            : pos.down();
+            DoubleBlockHalf half = state.get(HALF);
 
-            BlockState otherState =
-                    world.getBlockState(otherPos);
+            // If upper half is broken,
+            // destroy lower WITHOUT drops
+            if (half == DoubleBlockHalf.UPPER) {
 
-            if (otherState.isOf(this)) {
+                BlockPos lowerPos = pos.down();
+                BlockState lowerState = world.getBlockState(lowerPos);
 
-                world.setBlockState(
-                        otherPos,
-                        Blocks.AIR.getDefaultState(),
-                        Block.NOTIFY_ALL
-                );
+                if (lowerState.isOf(this)) {
+
+                    world.setBlockState(
+                            lowerPos,
+                            Blocks.AIR.getDefaultState(),
+                            Block.NOTIFY_ALL
+                    );
+                }
+            }
+
+            // If lower half is broken,
+            // destroy upper WITHOUT drops
+            else {
+
+                BlockPos upperPos = pos.up();
+                BlockState upperState = world.getBlockState(upperPos);
+
+                if (upperState.isOf(this)) {
+
+                    world.setBlockState(
+                            upperPos,
+                            Blocks.AIR.getDefaultState(),
+                            Block.NOTIFY_ALL
+                    );
+                }
             }
         }
 
         return super.onBreak(world, pos, state, player);
+    }
+
+    @Override
+    protected boolean hasSidedTransparency(BlockState state) {
+        return true;
     }
 
     // =========================================================

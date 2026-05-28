@@ -23,6 +23,7 @@
 	},
 
 	"mixins": [
+		"backroomsbounded.mixins.json"
 	],
 
 	"depends": {

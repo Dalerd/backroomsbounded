@@ -16,14 +16,18 @@ import net.dalerd.backroomsbounded.block.custom.WaterCoolerBlock;
 
 public class ModBlocks {
 
+    // =========================
+    // LOCKER
+    // =========================
+
     public static final Block LOCKER = registerBlock(
             "locker",
+
             new LockerBlock(
                     AbstractBlock.Settings.create()
-                            .strength(5.0f)
+                            .strength(2.5f, 3.0f)
                             .requiresTool()
                             .sounds(BlockSoundGroup.METAL)
-                            .nonOpaque()
             )
     );
 

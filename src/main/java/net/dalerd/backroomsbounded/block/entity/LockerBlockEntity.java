@@ -5,7 +5,6 @@ import net.dalerd.backroomsbounded.client.LockerEffectsClient;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-
 import net.minecraft.block.entity.BlockEntity;
 
 import net.minecraft.entity.Entity;
@@ -26,12 +25,7 @@ public class LockerBlockEntity extends BlockEntity {
     private int damage = 0;
 
     public LockerBlockEntity(BlockPos pos, BlockState state) {
-
-        super(
-                ModBlockEntities.LOCKER_BE,
-                pos,
-                state
-        );
+        super(ModBlockEntities.LOCKER_BE, pos, state);
     }
 
     public static void tick(
@@ -41,88 +35,95 @@ public class LockerBlockEntity extends BlockEntity {
             LockerBlockEntity be
     ) {
 
-        // Safety check
+        // =====================================================
+        // SAFETY
+        // =====================================================
+
         if (!(state.getBlock() instanceof LockerBlock)) {
             return;
         }
 
-        // Only LOWER HALF runs logic
-        if (state.get(LockerBlock.HALF).asString().equals("upper")) {
-            return;
-        }
+        // =====================================================
+        // CLIENT OVERLAY
+        // =====================================================
 
-        // Reset client effect
         if (world.isClient()) {
+
             LockerEffectsClient.inLocker = false;
-        }
 
-        // Interior box
-        Box inside = new Box(
-                pos.getX() + 0.15,
-                pos.getY() + 0.05,
-                pos.getZ() + 0.15,
+            // Always use lower half
+            BlockPos basePos =
+                    state.get(LockerBlock.HALF).asString().equals("upper")
+                            ? pos.down()
+                            : pos;
 
-                pos.getX() + 0.85,
-                pos.getY() + 1.95,
-                pos.getZ() + 0.85
-        );
+            BlockState baseState =
+                    world.getBlockState(basePos);
 
-        // Detect player inside
-        for (PlayerEntity player : world.getEntitiesByClass(
-                PlayerEntity.class,
-                inside,
-                player -> true
-        )) {
+            boolean closed =
+                    !baseState.get(LockerBlock.OPEN);
 
-            if (world.isClient()) {
-                LockerEffectsClient.inLocker = true;
+            // ONLY when locker is CLOSED
+            if (closed) {
+
+                Box inside = new Box(
+                        basePos.getX() + 0.15,
+                        basePos.getY() + 0.05,
+                        basePos.getZ() + 0.15,
+
+                        basePos.getX() + 0.85,
+                        basePos.getY() + 1.95,
+                        basePos.getZ() + 0.85
+                );
+
+                for (PlayerEntity player : world.getEntitiesByClass(
+                        PlayerEntity.class,
+                        inside,
+                        p -> true
+                )) {
+
+                    LockerEffectsClient.inLocker = true;
+                    break;
+                }
             }
-        }
 
-        // Client ends here
-        if (world.isClient()) {
             return;
         }
 
-        // Nearby hostile entities
-        Box nearby = new Box(pos).expand(1.5);
+        // =====================================================
+        // SERVER DAMAGE LOGIC
+        // =====================================================
 
-        for (Entity entity : world.getOtherEntities(
-                null,
-                nearby
-        )) {
+        BlockPos basePos =
+                state.get(LockerBlock.HALF).asString().equals("upper")
+                        ? pos.down()
+                        : pos;
+
+        Box nearby = new Box(basePos).expand(1.5);
+
+        for (Entity entity : world.getOtherEntities(null, nearby)) {
 
             if (entity instanceof WitherSkeletonEntity) {
 
-                // Random damage chance
                 if (world.random.nextInt(80) == 0) {
 
                     be.damage += 3;
 
                     world.syncWorldEvent(
                             2001,
-                            pos,
+                            basePos,
                             Block.getRawIdFromState(state)
                     );
 
-                    // Break locker
+                    // BREAK LOCKER
                     if (be.damage >= 10) {
 
-                        // Break lower
-                        world.breakBlock(
-                                pos,
-                                false
-                        );
+                        world.breakBlock(basePos, false);
 
-                        // Break upper
-                        BlockPos upperPos = pos.up();
+                        BlockPos upper = basePos.up();
 
-                        if (world.getBlockState(upperPos).getBlock() instanceof LockerBlock) {
-
-                            world.breakBlock(
-                                    upperPos,
-                                    false
-                            );
+                        if (world.getBlockState(upper).getBlock() instanceof LockerBlock) {
+                            world.breakBlock(upper, false);
                         }
 
                         break;
@@ -140,15 +141,9 @@ public class LockerBlockEntity extends BlockEntity {
             RegistryWrapper.WrapperLookup lookup
     ) {
 
-        super.writeNbt(
-                nbt,
-                lookup
-        );
+        super.writeNbt(nbt, lookup);
 
-        nbt.putInt(
-                "damage",
-                damage
-        );
+        nbt.putInt("damage", damage);
     }
 
     @Override
@@ -157,10 +152,7 @@ public class LockerBlockEntity extends BlockEntity {
             RegistryWrapper.WrapperLookup lookup
     ) {
 
-        super.readNbt(
-                nbt,
-                lookup
-        );
+        super.readNbt(nbt, lookup);
 
         damage = nbt.getInt("damage");
     }
