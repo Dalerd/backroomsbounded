@@ -3,10 +3,8 @@ package net.dalerd.backroomsbounded;
 import net.dalerd.backroomsbounded.block.ModBlocks;
 import net.dalerd.backroomsbounded.block.entity.ModBlockEntities;
 import net.dalerd.backroomsbounded.client.LockerEffectsClient;
-import net.dalerd.backroomsbounded.event.BlockGlitchHandler;
+import net.dalerd.backroomsbounded.event.*;
 
-import net.dalerd.backroomsbounded.event.FroglightCorruptionHandler;
-import net.dalerd.backroomsbounded.event.RandomBackroomsTeleportHandler;
 import net.dalerd.backroomsbounded.item.ModItems;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -28,6 +26,7 @@ public class BackroomsBounded implements ModInitializer {
 	@Override
 	public void onInitialize() {
 
+		BackroomsWorldGenerator.init();
 		LockerEffectsClient.register();
 
 		ModItems.registerModItems();

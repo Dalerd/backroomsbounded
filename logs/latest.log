@@ -1,5 +1,5 @@
-[11:11:06] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 1.21.1 with Fabric Loader 0.16.10
-[11:11:06] [main/INFO] (FabricLoader) Loading 56 mods:
+[20:52:32] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 1.21.1 with Fabric Loader 0.16.10
+[20:52:34] [main/INFO] (FabricLoader) Loading 56 mods:
 	- backroomsbounded 1.0.0
 	- fabric-api 0.107.0+1.21.1
 	- fabric-api-base 0.4.42+6573ed8c19
@@ -56,13 +56,13 @@
 	- java 21
 	- minecraft 1.21.1
 	- mixinextras 0.4.1
-[11:11:06] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/Users/eldargaripov/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.4+mixin.0.8.7/6a12aacc794f1078458433116e9ed42c1cc98096/sponge-mixin-0.15.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
-[11:11:06] [main/INFO] (FabricLoader/Mixin) Loaded Fabric development mappings for mixin remapper!
-[11:11:07] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_17
-[11:11:07] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_21
-[11:11:08] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.4.1).
-[11:11:10] [Datafixer Bootstrap/INFO] (Minecraft) 226 Datafixer optimizations took 564 milliseconds
-[11:11:18] [Render thread/ERROR] (FabricLoader) Minecraft has crashed!
+[20:52:34] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/Users/eldargaripov/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.4+mixin.0.8.7/6a12aacc794f1078458433116e9ed42c1cc98096/sponge-mixin-0.15.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[20:52:35] [main/INFO] (FabricLoader/Mixin) Loaded Fabric development mappings for mixin remapper!
+[20:52:35] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_17
+[20:52:35] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_21
+[20:52:40] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.4.1).
+[20:52:44] [Datafixer Bootstrap/INFO] (Minecraft) 226 Datafixer optimizations took 1447 milliseconds
+[20:53:05] [Render thread/ERROR] (FabricLoader) Minecraft has crashed!
 net.fabricmc.loader.impl.FormattedException: java.lang.NoClassDefFoundError: Could not initialize class com.mojang.blaze3d.systems.RenderSystem
 	at net.fabricmc.loader.impl.FormattedException.ofLocalized(FormattedException.java:63) ~[fabric-loader-0.16.10.jar:?]
 	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:482) ~[fabric-loader-0.16.10.jar:?]
