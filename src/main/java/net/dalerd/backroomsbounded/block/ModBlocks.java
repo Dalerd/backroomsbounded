@@ -40,6 +40,7 @@ public class ModBlocks {
             new WaterCoolerBlock(
                     AbstractBlock.Settings.create()
                             .strength(2.0f)
+                            .requiresTool()
                             .sounds(BlockSoundGroup.METAL)
                             .nonOpaque()
             )
@@ -96,7 +97,6 @@ public class ModBlocks {
                             .mapColor(MapColor.PALE_YELLOW)
                             .strength(1.5f)
                             .sounds(BlockSoundGroup.WOOL)
-                            .requiresTool()
             )
     );
 
@@ -107,7 +107,6 @@ public class ModBlocks {
                             .mapColor(MapColor.PALE_YELLOW)
                             .strength(0.4f)
                             .sounds(BlockSoundGroup.WOOL)
-                            .requiresTool()
             )
     );
 
@@ -118,7 +117,6 @@ public class ModBlocks {
                             .mapColor(MapColor.DARK_GREEN)
                             .strength(0.2f)
                             .sounds(BlockSoundGroup.WOOL)
-                            .requiresTool()
             )
     );
 
@@ -129,7 +127,6 @@ public class ModBlocks {
                             .mapColor(MapColor.GREEN)
                             .strength(0.15f)
                             .sounds(BlockSoundGroup.WOOL)
-                            .requiresTool()
             )
     );
 
@@ -154,7 +151,6 @@ public class ModBlocks {
                             .mapColor(MapColor.PALE_YELLOW)
                             .strength(0.5f)
                             .sounds(BlockSoundGroup.WOOL)
-                            .requiresTool()
             )
     );
 
@@ -165,7 +161,6 @@ public class ModBlocks {
                             .mapColor(MapColor.PALE_YELLOW)
                             .strength(0.4f)
                             .sounds(BlockSoundGroup.WOOL)
-                            .requiresTool()
             )
     );
 
@@ -176,7 +171,6 @@ public class ModBlocks {
                             .mapColor(MapColor.DARK_GREEN)
                             .strength(0.2f)
                             .sounds(BlockSoundGroup.WOOL)
-                            .requiresTool()
             )
     );
 
@@ -187,7 +181,6 @@ public class ModBlocks {
                             .mapColor(MapColor.GREEN)
                             .strength(0.15f)
                             .sounds(BlockSoundGroup.WOOL)
-                            .requiresTool()
             )
     );
 

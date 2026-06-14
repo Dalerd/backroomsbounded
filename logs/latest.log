@@ -1,5 +1,5 @@
-[20:52:32] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 1.21.1 with Fabric Loader 0.16.10
-[20:52:34] [main/INFO] (FabricLoader) Loading 56 mods:
+[18:05:01] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 1.21.1 with Fabric Loader 0.16.10
+[18:05:02] [main/INFO] (FabricLoader) Loading 56 mods:
 	- backroomsbounded 1.0.0
 	- fabric-api 0.107.0+1.21.1
 	- fabric-api-base 0.4.42+6573ed8c19
@@ -56,13 +56,13 @@
 	- java 21
 	- minecraft 1.21.1
 	- mixinextras 0.4.1
-[20:52:34] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/Users/eldargaripov/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.4+mixin.0.8.7/6a12aacc794f1078458433116e9ed42c1cc98096/sponge-mixin-0.15.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
-[20:52:35] [main/INFO] (FabricLoader/Mixin) Loaded Fabric development mappings for mixin remapper!
-[20:52:35] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_17
-[20:52:35] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_21
-[20:52:40] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.4.1).
-[20:52:44] [Datafixer Bootstrap/INFO] (Minecraft) 226 Datafixer optimizations took 1447 milliseconds
-[20:53:05] [Render thread/ERROR] (FabricLoader) Minecraft has crashed!
+[18:05:02] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/Users/eldargaripov/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.4+mixin.0.8.7/6a12aacc794f1078458433116e9ed42c1cc98096/sponge-mixin-0.15.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[18:05:02] [main/INFO] (FabricLoader/Mixin) Loaded Fabric development mappings for mixin remapper!
+[18:05:02] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_17
+[18:05:02] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_21
+[18:05:04] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.4.1).
+[18:05:06] [Datafixer Bootstrap/INFO] (Minecraft) 226 Datafixer optimizations took 653 milliseconds
+[18:05:14] [Render thread/ERROR] (FabricLoader) Minecraft has crashed!
 net.fabricmc.loader.impl.FormattedException: java.lang.NoClassDefFoundError: Could not initialize class com.mojang.blaze3d.systems.RenderSystem
 	at net.fabricmc.loader.impl.FormattedException.ofLocalized(FormattedException.java:63) ~[fabric-loader-0.16.10.jar:?]
 	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:482) ~[fabric-loader-0.16.10.jar:?]
@@ -70,16 +70,16 @@ net.fabricmc.loader.impl.FormattedException: java.lang.NoClassDefFoundError: Cou
 	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23) [fabric-loader-0.16.10.jar:?]
 	at net.fabricmc.devlaunchinjector.Main.main(Main.java:86) [dev-launch-injector-0.2.1+build.8.jar:?]
 Caused by: java.lang.NoClassDefFoundError: Could not initialize class com.mojang.blaze3d.systems.RenderSystem
-	at knot/net.minecraft.util.SystemDetails.addSection(SystemDetails.java:70) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
-	at knot/net.minecraft.client.MinecraftClient.addSystemDetailsToCrashReport(MinecraftClient.java:2542) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
-	at knot/net.minecraft.client.MinecraftClient.addSystemDetailsToCrashReport(MinecraftClient.java:2517) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
-	at knot/net.minecraft.client.main.Main.main(Main.java:249) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.util.SystemDetails.addSection(SystemDetails.java:85) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.client.MinecraftClient.addSystemDetailsToCrashReport(MinecraftClient.java:2503) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.client.MinecraftClient.addSystemDetailsToCrashReport(MinecraftClient.java:2478) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.client.main.Main.main(Main.java:222) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
 	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:480) ~[fabric-loader-0.16.10.jar:?]
 	... 3 more
 Caused by: java.lang.ExceptionInInitializerError: Exception java.lang.NoClassDefFoundError: org/lwjgl/system/MemoryUtil [in thread "Render thread"]
-	at knot/net.minecraft.client.util.BufferAllocator.<clinit>(BufferAllocator.java:12) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
-	at knot/net.minecraft.client.render.Tessellator.<init>(Tessellator.java:30) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
-	at knot/com.mojang.blaze3d.systems.RenderSystem.<clinit>(RenderSystem.java:48) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
-	at knot/net.minecraft.client.main.Main.main(Main.java:236) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.client.util.BufferAllocator.<clinit>(BufferAllocator.java:26) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.client.render.Tessellator.<init>(Tessellator.java:38) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/com.mojang.blaze3d.systems.RenderSystem.<clinit>(RenderSystem.java:57) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.client.main.Main.main(Main.java:210) ~[minecraft-merged-c5e0f6b853-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
 	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:480) ~[fabric-loader-0.16.10.jar:?]
 	... 3 more

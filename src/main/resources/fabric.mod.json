@@ -16,9 +16,6 @@
 		],
 		"client": [
 			"net.dalerd.backroomsbounded.BackroomsBoundedClient"
-		],
-		"fabric-datagen": [
-			"net.dalerd.backroomsbounded.datagen.ModDataGenerator"
 		]
 	},
 

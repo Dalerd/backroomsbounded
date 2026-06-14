@@ -34,8 +34,8 @@ public class ModLootTableProvider extends FabricBlockLootTableProvider {
     @Override
     public void generate() {
 
-// =========================
-        // NORMAL SELF DROPS
+        // =========================
+        // NORMAL SELF DROPS (mineable by hand)
         // =========================
 
         addDrop(ModBlocks.BACKBOARD_BLOCK);
@@ -45,101 +45,89 @@ public class ModLootTableProvider extends FabricBlockLootTableProvider {
 
         // =========================
         // LOCKER
-        // Silk Touch = locker
-        // Otherwise = 0-5 iron ingots
+        // Drops 1-6 iron ingots (no silk touch needed)
         // =========================
 
         addDrop(ModBlocks.LOCKER,
-                this.dropsWithSilkTouch(ModBlocks.LOCKER,
-                        this.applyExplosionDecay(ModBlocks.LOCKER,
-                                ItemEntry.builder(Items.IRON_INGOT)
-                                        .apply(SetCountLootFunction.builder(
-                                                UniformLootNumberProvider.create(0.0f, 5.0f)))))
-        );
-        // =========================
-        // STAINED / WET
-        // Silk Touch = block
-        // Otherwise = planks
-        // =========================
-
-        addDrop(
-                ModBlocks.STAINED_WALLPAPER_BLOCK,
-                silkOrMaterials(ModBlocks.STAINED_WALLPAPER_BLOCK, false)
-        );
-
-        addDrop(
-                ModBlocks.WET_WALLPAPER_BLOCK,
-                silkOrMaterials(ModBlocks.WET_WALLPAPER_BLOCK, false)
-        );
-
-        addDrop(
-                ModBlocks.STAINED_TORN_WALLPAPER_BLOCK,
-                silkOrMaterials(ModBlocks.STAINED_TORN_WALLPAPER_BLOCK, false)
-        );
-
-        addDrop(
-                ModBlocks.WET_TORN_WALLPAPER_BLOCK,
-                silkOrMaterials(ModBlocks.WET_TORN_WALLPAPER_BLOCK, false)
+                LootTable.builder()
+                        .pool(LootPool.builder()
+                                .rolls(UniformLootNumberProvider.create(1.0f, 6.0f))
+                                .with(ItemEntry.builder(Items.IRON_INGOT))
+                        )
         );
 
         // =========================
-        // MOLDY / INFECTED
-        // Silk Touch = block
-        // Otherwise = sticks
+        // STAINED / WET WALLPAPER
+        // Drops 0-3 oak planks
         // =========================
 
-        addDrop(
-                ModBlocks.MOLDY_WALLPAPER_BLOCK,
-                silkOrMaterials(ModBlocks.MOLDY_WALLPAPER_BLOCK, true)
+        addDrop(ModBlocks.STAINED_WALLPAPER_BLOCK,
+                LootTable.builder()
+                        .pool(LootPool.builder()
+                                .rolls(UniformLootNumberProvider.create(0.0f, 3.0f))
+                                .with(ItemEntry.builder(Items.OAK_PLANKS))
+                        )
         );
 
-        addDrop(
-                ModBlocks.MOLD_INFECTED_WALLPAPER_BLOCK,
-                silkOrMaterials(ModBlocks.MOLD_INFECTED_WALLPAPER_BLOCK, true)
+        addDrop(ModBlocks.WET_WALLPAPER_BLOCK,
+                LootTable.builder()
+                        .pool(LootPool.builder()
+                                .rolls(UniformLootNumberProvider.create(0.0f, 3.0f))
+                                .with(ItemEntry.builder(Items.OAK_PLANKS))
+                        )
         );
 
-        addDrop(
-                ModBlocks.MOLDY_TORN_WALLPAPER_BLOCK,
-                silkOrMaterials(ModBlocks.MOLDY_TORN_WALLPAPER_BLOCK, true)
+        addDrop(ModBlocks.STAINED_TORN_WALLPAPER_BLOCK,
+                LootTable.builder()
+                        .pool(LootPool.builder()
+                                .rolls(UniformLootNumberProvider.create(0.0f, 3.0f))
+                                .with(ItemEntry.builder(Items.OAK_PLANKS))
+                        )
         );
 
-        addDrop(
-                ModBlocks.MOLD_INFECTED_TORN_WALLPAPER_BLOCK,
-                silkOrMaterials(ModBlocks.MOLD_INFECTED_TORN_WALLPAPER_BLOCK, true)
+        addDrop(ModBlocks.WET_TORN_WALLPAPER_BLOCK,
+                LootTable.builder()
+                        .pool(LootPool.builder()
+                                .rolls(UniformLootNumberProvider.create(0.0f, 3.0f))
+                                .with(ItemEntry.builder(Items.OAK_PLANKS))
+                        )
         );
-    }
 
-    // =========================
-    // CUSTOM LOOT
-    // =========================
+        // =========================
+        // MOLDY / INFECTED WALLPAPER
+        // Drops 0-4 sticks
+        // =========================
 
-    private LootTable.Builder silkOrMaterials(Block block, boolean sticksOnly) {
+        addDrop(ModBlocks.MOLDY_WALLPAPER_BLOCK,
+                LootTable.builder()
+                        .pool(LootPool.builder()
+                                .rolls(UniformLootNumberProvider.create(0.0f, 4.0f))
+                                .with(ItemEntry.builder(Items.STICK))
+                        )
+        );
 
-        if (sticksOnly) {
+        addDrop(ModBlocks.MOLD_INFECTED_WALLPAPER_BLOCK,
+                LootTable.builder()
+                        .pool(LootPool.builder()
+                                .rolls(UniformLootNumberProvider.create(0.0f, 4.0f))
+                                .with(ItemEntry.builder(Items.STICK))
+                        )
+        );
 
-            return dropsWithSilkTouch(
-                    block,
-                    this.applyExplosionDecay(
-                            block,
-                            ItemEntry.builder(Items.STICK)
-                                    .apply(SetCountLootFunction.builder(
-                                            UniformLootNumberProvider.create(0.0f, 4.0f)
-                                    ))
-                    )
-            );
+        addDrop(ModBlocks.MOLDY_TORN_WALLPAPER_BLOCK,
+                LootTable.builder()
+                        .pool(LootPool.builder()
+                                .rolls(UniformLootNumberProvider.create(0.0f, 4.0f))
+                                .with(ItemEntry.builder(Items.STICK))
+                        )
+        );
 
-        } else {
-
-            return dropsWithSilkTouch(
-                    block,
-                    this.applyExplosionDecay(
-                            block,
-                            ItemEntry.builder(Items.OAK_PLANKS)
-                                    .apply(SetCountLootFunction.builder(
-                                            UniformLootNumberProvider.create(0.0f, 3.0f)
-                                    ))
-                    )
-            );
-        }
+        addDrop(ModBlocks.MOLD_INFECTED_TORN_WALLPAPER_BLOCK,
+                LootTable.builder()
+                        .pool(LootPool.builder()
+                                .rolls(UniformLootNumberProvider.create(0.0f, 4.0f))
+                                .with(ItemEntry.builder(Items.STICK))
+                        )
+        );
     }
 }

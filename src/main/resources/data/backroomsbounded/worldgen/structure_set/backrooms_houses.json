@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "backroomsbounded:backrooms_house",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1648736,
+    "spacing": 80,
+    "separation": 40
+  }
+}

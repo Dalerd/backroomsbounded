@@ -1,14 +1,11 @@
 {
   "type": "backroomsbounded:backrooms_type",
   "generator": {
-    "type": "minecraft:flat",
-    "settings": {
-      "layers": [
-        { "block": "minecraft:bedrock", "height": 1 },
-        { "block": "minecraft:smooth_stone", "height": 3 }
-      ],
-      "biome": "backroomsbounded:backrooms_biome",
-      "structures": { "structures": {} }
+    "type": "backroomsbounded:backrooms_chunk_generator",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "backroomsbounded:backrooms_biome"
     }
   }
 }
+

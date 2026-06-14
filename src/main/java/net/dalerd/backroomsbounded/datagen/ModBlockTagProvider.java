@@ -27,21 +27,17 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
         // =========================
 
         getOrCreateTagBuilder(BlockTags.AXE_MINEABLE)
-
                 .add(ModBlocks.BACKBOARD_BLOCK)
-
                 .add(ModBlocks.WALLPAPER_BLOCK)
                 .add(ModBlocks.STAINED_WALLPAPER_BLOCK)
                 .add(ModBlocks.WET_WALLPAPER_BLOCK)
                 .add(ModBlocks.MOLDY_WALLPAPER_BLOCK)
                 .add(ModBlocks.MOLD_INFECTED_WALLPAPER_BLOCK)
-
                 .add(ModBlocks.TORN_WALLPAPER_BLOCK)
                 .add(ModBlocks.STAINED_TORN_WALLPAPER_BLOCK)
                 .add(ModBlocks.WET_TORN_WALLPAPER_BLOCK)
                 .add(ModBlocks.MOLDY_TORN_WALLPAPER_BLOCK)
                 .add(ModBlocks.MOLD_INFECTED_TORN_WALLPAPER_BLOCK)
-
                 .add(ModBlocks.SPONGE_WALLPAPER_BLOCK);
 
         // =========================
@@ -49,31 +45,23 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
         // =========================
 
         getOrCreateTagBuilder(BlockTags.PICKAXE_MINEABLE)
-
                 .add(ModBlocks.LOCKER);
 
         // =========================
-        // REQUIRES STONE TOOL
+        // MINEABLE WITH HAND (no tool required)
+        // =========================
+
+        getOrCreateTagBuilder(BlockTags.AXE_MINEABLE)
+                .add(ModBlocks.WALLPAPER_BLOCK)
+                .add(ModBlocks.TORN_WALLPAPER_BLOCK)
+                .add(ModBlocks.SPONGE_WALLPAPER_BLOCK);
+
+        // =========================
+        // REQUIRES STONE TOOL (only for harder blocks)
         // =========================
 
         getOrCreateTagBuilder(BlockTags.NEEDS_STONE_TOOL)
-
                 .add(ModBlocks.BACKBOARD_BLOCK)
-
-                .add(ModBlocks.WALLPAPER_BLOCK)
-                .add(ModBlocks.STAINED_WALLPAPER_BLOCK)
-                .add(ModBlocks.WET_WALLPAPER_BLOCK)
-                .add(ModBlocks.MOLDY_WALLPAPER_BLOCK)
-                .add(ModBlocks.MOLD_INFECTED_WALLPAPER_BLOCK)
-
-                .add(ModBlocks.TORN_WALLPAPER_BLOCK)
-                .add(ModBlocks.STAINED_TORN_WALLPAPER_BLOCK)
-                .add(ModBlocks.WET_TORN_WALLPAPER_BLOCK)
-                .add(ModBlocks.MOLDY_TORN_WALLPAPER_BLOCK)
-                .add(ModBlocks.MOLD_INFECTED_TORN_WALLPAPER_BLOCK)
-
-                .add(ModBlocks.SPONGE_WALLPAPER_BLOCK)
-
                 .add(ModBlocks.LOCKER);
     }
 }
