@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:jigsaw",
+  "biomes": "backroomsbounded:backrooms_biome",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none",
+  "start_pool": "backroomsbounded:backrooms_structures",
+  "size": 3,
+  "start_height": {
+    "type": "minecraft:uniform",
+    "min_inclusive": {
+      "absolute": 8
+    },
+    "max_inclusive": {
+      "absolute": 240
+    }
+  },
+  "max_distance_from_center": 50,
+  "use_expansion_hack": false
+}

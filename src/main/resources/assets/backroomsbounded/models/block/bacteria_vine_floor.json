@@ -1,0 +1,23 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "0": "backroomsbounded:block/bacteria_vines",
+    "particle": "backroomsbounded:block/bacteria_vines"
+  },
+  "elements": [
+    {
+      "from": [0, 15.99, 0],
+      "to": [16, 15.99, 16],
+      "faces": {
+        "up": {
+          "uv": [0, 0, 16, 16],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [16, 0, 0, 16],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

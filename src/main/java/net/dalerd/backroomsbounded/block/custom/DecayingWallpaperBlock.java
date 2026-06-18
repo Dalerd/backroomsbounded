@@ -3,6 +3,7 @@ package net.dalerd.backroomsbounded.block.custom;
 import net.dalerd.backroomsbounded.block.ModBlocks;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
@@ -14,6 +15,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.ItemActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 
@@ -26,10 +28,23 @@ public class DecayingWallpaperBlock extends Block {
     @Override
     protected void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
 
-        if (!isNearWater(world, pos)) {
+        // Decay from water nearby
+        if (isNearWater(world, pos)) {
+            decayStage(state, world, pos, random);
             return;
         }
 
+        // Decay from bacteria blocks nearby
+        if (isNearBacteria(world, pos)) {
+            // Bacteria accelerates decay - higher chance
+            if (random.nextInt(5) == 0) {
+                decayStage(state, world, pos, random);
+            }
+            return;
+        }
+    }
+
+    private void decayStage(BlockState state, ServerWorld world, BlockPos pos, Random random) {
         Block current = state.getBlock();
 
         // NORMAL -> STAINED
@@ -89,21 +104,17 @@ public class DecayingWallpaperBlock extends Block {
 
     @Override
     protected ItemActionResult onUseWithItem(ItemStack stack, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        // Check if player is holding shears
         if (stack.isOf(Items.SHEARS)) {
             if (!world.isClient) {
-                // Get the torn variant of this wallpaper
                 BlockState tornState = getTornVariant(state);
 
                 if (tornState != null && tornState != state) {
-                    // Replace the block with its torn variant
                     world.setBlockState(pos, tornState, Block.NOTIFY_ALL);
-
-                    // Damage the shears
-                    stack.damage(1, player, hand == Hand.MAIN_HAND ? net.minecraft.entity.EquipmentSlot.MAINHAND : net.minecraft.entity.EquipmentSlot.OFFHAND);
-
-                    // Play shears sound
+                    stack.damage(1, player, hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
                     world.playSound(null, pos, SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.BLOCKS, 1.0f, 1.0f);
+
+                    // Drop 1 paper when shearing wallpaper
+                    Block.dropStack(world, pos, new ItemStack(Items.PAPER, 1));
                 }
             }
             return ItemActionResult.success(world.isClient);
@@ -115,7 +126,6 @@ public class DecayingWallpaperBlock extends Block {
     private BlockState getTornVariant(BlockState currentState) {
         Block currentBlock = currentState.getBlock();
 
-        // Map each wallpaper to its torn variant
         if (currentBlock == ModBlocks.WALLPAPER_BLOCK) {
             return ModBlocks.TORN_WALLPAPER_BLOCK.getDefaultState();
         }
@@ -132,22 +142,23 @@ public class DecayingWallpaperBlock extends Block {
             return ModBlocks.MOLD_INFECTED_TORN_WALLPAPER_BLOCK.getDefaultState();
         }
         if (currentBlock == ModBlocks.SPONGE_WALLPAPER_BLOCK) {
-            return currentState; // Sponge stays sponge
+            return currentState;
         }
-        // Already torn variants stay as they are
         if (currentBlock == ModBlocks.TORN_WALLPAPER_BLOCK ||
                 currentBlock == ModBlocks.STAINED_TORN_WALLPAPER_BLOCK ||
                 currentBlock == ModBlocks.WET_TORN_WALLPAPER_BLOCK ||
                 currentBlock == ModBlocks.MOLDY_TORN_WALLPAPER_BLOCK ||
                 currentBlock == ModBlocks.MOLD_INFECTED_TORN_WALLPAPER_BLOCK) {
-            return currentState; // Already torn, no change
+            return currentState;
         }
 
-        return currentState; // No torn variant available
+        return currentState;
     }
 
+    /**
+     * Check if there's water nearby (within 2 blocks).
+     */
     private boolean isNearWater(World world, BlockPos pos) {
-
         for (BlockPos checkPos : BlockPos.iterate(
                 pos.add(-2, -2, -2),
                 pos.add(2, 2, 2))) {
@@ -156,7 +167,26 @@ public class DecayingWallpaperBlock extends Block {
                 return true;
             }
         }
+        return false;
+    }
 
+    /**
+     * Check if there are bacteria blocks nearby (within 3 blocks).
+     * Bacteria shrooms and vines accelerate wallpaper decay.
+     */
+    private boolean isNearBacteria(World world, BlockPos pos) {
+        for (BlockPos checkPos : BlockPos.iterate(
+                pos.add(-3, -3, -3),
+                pos.add(3, 3, 3))) {
+
+            BlockState state = world.getBlockState(checkPos);
+
+            if (state.isOf(ModBlocks.BACTERIA_SHROOM_HORIZONTAL) ||
+                    state.isOf(ModBlocks.BACTERIA_SHROOM_VERTICAL) ||
+                    state.isOf(ModBlocks.BACTERIA_VINE)) {
+                return true;
+            }
+        }
         return false;
     }
 }

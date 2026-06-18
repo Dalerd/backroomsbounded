@@ -1,0 +1,43 @@
+{
+  "texture_size": [64, 64],
+  "textures": {
+    "0": "backroomsbounded:block/bacteria_shroom_vertical",
+    "particle": "backroomsbounded:block/bacteria_shroom_vertical"
+  },
+  "elements": [
+    {
+      "from": [5, 5, 0],
+      "to": [14, 6, 5],
+      "faces": {
+        "north": {"uv": [8.5, 5.5, 6.25, 5.75], "texture": "#0"},
+        "east": {"uv": [7.75, 6, 6.25, 6.25], "texture": "#0"},
+        "south": {"uv": [8.5, 5.75, 6.25, 6], "texture": "#0"},
+        "west": {"uv": [7.75, 6.25, 6.25, 6.5], "texture": "#0"},
+        "up": {"uv": [6.25, 5, 8.5, 3.5], "texture": "#0"},
+        "down": {"uv": [6.25, 5, 8.5, 6.5], "texture": "#0"}
+      }
+    },
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 4, 4], "texture": "#0"},
+        "south": {"uv": [0, 4, 4, 8], "texture": "#0"},
+        "up": {"uv": [4, 0, 0, 0], "texture": "#0"},
+        "down": {"uv": [4, 0, 0, 0], "texture": "#0"}
+      }
+    },
+    {
+      "from": [2, 10, 0],
+      "to": [13, 12, 6],
+      "faces": {
+        "north": {"uv": [9, 3.5, 6.25, 4], "texture": "#0"},
+        "south": {"uv": [9, 4, 6.25, 4.5], "texture": "#0"},
+        "east": {"uv": [8, 4.5, 6.25, 5], "texture": "#0"},
+        "west": {"uv": [8, 5, 6.25, 5.5], "texture": "#0"},
+        "up": {"uv": [6.75, 1.75, 4, 0], "texture": "#0"},
+        "down": {"uv": [6.75, 1.75, 4, 3.5], "texture": "#0"}
+      }
+    }
+  ]
+}

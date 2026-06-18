@@ -59,6 +59,11 @@ public class SanityManager {
         darknessTicks.put(player.getUuid(), 0);
     }
 
+    public static void onPlayerDeath(ServerPlayerEntity player) {
+        panicLevels.put(player.getUuid(), 0);
+        darknessTicks.put(player.getUuid(), 0);
+    }
+
     public static void onPlayerLoggedOut(ServerPlayerEntity player) {
         panicLevels.remove(player.getUuid());
         darknessTicks.remove(player.getUuid());

@@ -1,0 +1,50 @@
+{
+  "multipart": [
+    {
+      "when": { "up": "true" },
+      "apply": [
+        { "model": "backroomsbounded:block/bacteria_vine_floor", "y": 0 },
+        { "model": "backroomsbounded:block/bacteria_vine_floor", "y": 90 },
+        { "model": "backroomsbounded:block/bacteria_vine_floor", "y": 180 },
+        { "model": "backroomsbounded:block/bacteria_vine_floor", "y": 270 }
+      ]
+    },
+    {
+      "when": { "down": "true" },
+      "apply": [
+        { "model": "backroomsbounded:block/bacteria_vine_ceiling", "y": 0 },
+        { "model": "backroomsbounded:block/bacteria_vine_ceiling", "y": 90 },
+        { "model": "backroomsbounded:block/bacteria_vine_ceiling", "y": 180 },
+        { "model": "backroomsbounded:block/bacteria_vine_ceiling", "y": 270 }
+      ]
+    },
+    {
+      "when": { "north": "true" },
+      "apply": [
+        { "model": "backroomsbounded:block/bacteria_vine_wall", "y": 0, "uvlock": true },
+        { "model": "backroomsbounded:block/bacteria_vine_wall_rotated", "y": 0 }
+      ]
+    },
+    {
+      "when": { "south": "true" },
+      "apply": [
+        { "model": "backroomsbounded:block/bacteria_vine_wall", "y": 180, "uvlock": true },
+        { "model": "backroomsbounded:block/bacteria_vine_wall_rotated", "y": 180 }
+      ]
+    },
+    {
+      "when": { "east": "true" },
+      "apply": [
+        { "model": "backroomsbounded:block/bacteria_vine_wall", "y": 90, "uvlock": true },
+        { "model": "backroomsbounded:block/bacteria_vine_wall_rotated", "y": 90 }
+      ]
+    },
+    {
+      "when": { "west": "true" },
+      "apply": [
+        { "model": "backroomsbounded:block/bacteria_vine_wall", "y": 270, "uvlock": true },
+        { "model": "backroomsbounded:block/bacteria_vine_wall_rotated", "y": 270 }
+      ]
+    }
+  ]
+}

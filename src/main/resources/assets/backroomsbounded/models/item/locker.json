@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "backroomsbounded:block/closed_locker"
+    "layer0": "backroomsbounded:item/locker_item"
   }
 }

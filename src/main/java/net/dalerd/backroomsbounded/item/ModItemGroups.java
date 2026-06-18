@@ -42,6 +42,9 @@ public class ModItemGroups {
 
                         entries.add(ModItems.ALMOND_WATER);
                         entries.add(ModBlocks.WATER_COOLER);
+                        entries.add(ModBlocks.LOCKER);
+                        entries.add(ModBlocks.BACTERIA_SHROOM_HORIZONTAL);
+                        entries.add(ModBlocks.BACTERIA_VINE);
                     })
                     .build()
     );

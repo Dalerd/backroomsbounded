@@ -2,6 +2,12 @@ package net.dalerd.backroomsbounded.block;
 
 import net.dalerd.backroomsbounded.BackroomsBounded;
 import net.dalerd.backroomsbounded.block.custom.LockerBlock;
+import net.dalerd.backroomsbounded.block.custom.WaterCoolerBlock;
+import net.dalerd.backroomsbounded.block.custom.DecayingWallpaperBlock;
+import net.dalerd.backroomsbounded.block.custom.BacteriaShroomHorizontalBlock;
+import net.dalerd.backroomsbounded.block.custom.BacteriaShroomVerticalBlock;
+import net.dalerd.backroomsbounded.block.custom.BacteriaVineBlock;
+import net.dalerd.backroomsbounded.block.custom.BacteriaShroomItem;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.MapColor;
@@ -11,18 +17,14 @@ import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
-import net.dalerd.backroomsbounded.block.custom.DecayingWallpaperBlock;
-import net.dalerd.backroomsbounded.block.custom.WaterCoolerBlock;
 
 public class ModBlocks {
 
     // =========================
     // LOCKER
     // =========================
-
     public static final Block LOCKER = registerBlock(
             "locker",
-
             new LockerBlock(
                     AbstractBlock.Settings.create()
                             .strength(2.5f, 3.0f)
@@ -34,7 +36,6 @@ public class ModBlocks {
     // =========================
     // WATER COOLER
     // =========================
-
     public static final Block WATER_COOLER = registerBlock(
             "water_cooler",
             new WaterCoolerBlock(
@@ -49,7 +50,6 @@ public class ModBlocks {
     // =========================
     // GLITCH BLOCK
     // =========================
-
     public static final Block GLITCH_BLOCK = registerBlock(
             "glitch_block",
             new GlitchBlock(
@@ -65,7 +65,6 @@ public class ModBlocks {
     // =========================
     // BACKBOARD BLOCK
     // =========================
-
     public static final Block BACKBOARD_BLOCK = registerBlock(
             "backboard_block",
             new Block(
@@ -79,7 +78,6 @@ public class ModBlocks {
     // =========================
     // WALLPAPER BLOCKS
     // =========================
-
     public static final Block WALLPAPER_BLOCK = registerBlock(
             "wallpaper_block",
             new DecayingWallpaperBlock(
@@ -133,7 +131,6 @@ public class ModBlocks {
     // =========================
     // TORN WALLPAPER BLOCKS
     // =========================
-
     public static final Block TORN_WALLPAPER_BLOCK = registerBlock(
             "torn_wallpaper_block",
             new DecayingWallpaperBlock(
@@ -187,31 +184,64 @@ public class ModBlocks {
     // =========================
     // SPONGE WALLPAPER BLOCK
     // =========================
-
     public static final Block SPONGE_WALLPAPER_BLOCK = registerBlock(
             "sponge_wallpaper_block",
-            wallpaperSettings()
+            new Block(
+                    AbstractBlock.Settings.create()
+                            .mapColor(MapColor.PALE_YELLOW)
+                            .strength(1.0f)
+                            .sounds(BlockSoundGroup.WOOL)
+            )
     );
 
     // =========================
-    // SETTINGS HELPERS
+    // BACTERIA ECOSYSTEM
     // =========================
 
-    private static Block wallpaperSettings() {
-        return new Block(
-                AbstractBlock.Settings.create()
-                        .mapColor(MapColor.PALE_YELLOW)
-                        .strength(1.0f)
-                        .sounds(BlockSoundGroup.WOOL)
-        );
-    }
+    // Horizontal - placed on top of blocks, has a custom item that auto-switches
+    public static final Block BACTERIA_SHROOM_HORIZONTAL = registerBlockWithCustomItem(
+            "bacteria_shroom_horizontal",
+            new BacteriaShroomHorizontalBlock(
+                    AbstractBlock.Settings.create()
+                            .mapColor(MapColor.DARK_GREEN)
+                            .strength(0.5f)
+                            .sounds(BlockSoundGroup.FUNGUS)
+                            .nonOpaque()
+            )
+    );
+
+    // Vertical - placed on walls, no item (placed automatically by the horizontal item)
+    public static final Block BACTERIA_SHROOM_VERTICAL = registerBlockNoItem(
+            "bacteria_shroom_vertical",
+            new BacteriaShroomVerticalBlock(
+                    AbstractBlock.Settings.create()
+                            .mapColor(MapColor.DARK_GREEN)
+                            .strength(0.5f)
+                            .sounds(BlockSoundGroup.FUNGUS)
+                            .nonOpaque()
+            )
+    );
+
+    // Vine - acts like glow lichen
+    public static final Block BACTERIA_VINE = registerBlock(
+            "bacteria_vine",
+            new BacteriaVineBlock(
+                    AbstractBlock.Settings.create()
+                            .mapColor(MapColor.DARK_GREEN)
+                            .strength(0.2f)
+                            .sounds(BlockSoundGroup.FUNGUS)
+                            .nonOpaque()
+                            .luminance(state -> 7)
+                            .noCollision()
+            )
+    );
 
     // =========================
-    // REGISTER BLOCK METHOD
+    // REGISTER METHODS
     // =========================
 
+    // Standard block + BlockItem
     private static <T extends Block> T registerBlock(String name, T block) {
-
         Registry.register(
                 Registries.ITEM,
                 Identifier.of(BackroomsBounded.MOD_ID, name),
@@ -225,10 +255,33 @@ public class ModBlocks {
         );
     }
 
+    // Block with custom BacteriaShroomItem (auto-switches horizontal/vertical on placement)
+    private static <T extends Block> T registerBlockWithCustomItem(String name, T block) {
+        Registry.register(
+                Registries.ITEM,
+                Identifier.of(BackroomsBounded.MOD_ID, name),
+                new BacteriaShroomItem(block, new Item.Settings())
+        );
+
+        return Registry.register(
+                Registries.BLOCK,
+                Identifier.of(BackroomsBounded.MOD_ID, name),
+                block
+        );
+    }
+
+    // Block only, no item (vertical shroom is placed by the horizontal item)
+    private static <T extends Block> T registerBlockNoItem(String name, T block) {
+        return Registry.register(
+                Registries.BLOCK,
+                Identifier.of(BackroomsBounded.MOD_ID, name),
+                block
+        );
+    }
+
     // =========================
     // INIT
     // =========================
-
     public static void registerModBlocks() {
         BackroomsBounded.LOGGER.info("Registering Mod Blocks");
     }

@@ -18,8 +18,17 @@
 
   "block.backroomsbounded.glitch_block": "Glitch Block",
 
+  "block.backroomsbounded.bacteria_shroom_horizontal": "Bacteria Shroom",
+  "block.backroomsbounded.bacteria_vine": "Bacteria Vine",
+
   "item.backroomsbounded.almond_water": "Almond Water",
 
   "block.backroomsbounded.water_cooler": "Water Cooler",
-  "block.backroomsbounded.locker": "Locker"
+  "block.backroomsbounded.locker": "Locker",
+
+  "subtitles.backroomsbounded.entity.bacterium.roar": "Bacterium roars",
+  "subtitles.backroomsbounded.ambient.loop": "Backrooms ambiance",
+  "subtitles.backroomsbounded.ambient.mood": "Eerie atmosphere",
+  "subtitles.backroomsbounded.ambient.heartbeat": "Heartbeat pounds",
+  "subtitles.backroomsbounded.block.printer.printing": "Printer prints"
 }

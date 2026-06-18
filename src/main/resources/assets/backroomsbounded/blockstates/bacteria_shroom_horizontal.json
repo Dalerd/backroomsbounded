@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "backroomsbounded:block/bacteria_shroom_horizontal"
+    },
+    "facing=east": {
+      "model": "backroomsbounded:block/bacteria_shroom_horizontal",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "backroomsbounded:block/bacteria_shroom_horizontal",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "backroomsbounded:block/bacteria_shroom_horizontal",
+      "y": 270
+    }
+  }
+}

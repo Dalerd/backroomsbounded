@@ -1,0 +1,34 @@
+{
+  "entity.bacterium.roar": {
+    "sounds": [
+      "backroomsbounded:bacterium/bacterium_roar"
+    ],
+    "subtitle": "subtitles.backroomsbounded.entity.bacterium.roar"
+  },
+  "ambient.backrooms.loop": {
+    "sounds": [
+      "backroomsbounded:ambient/backrooms_ambient_1",
+      "backroomsbounded:ambient/backrooms_ambient_2"
+    ],
+    "subtitle": "subtitles.backroomsbounded.ambient.loop"
+  },
+  "ambient.backrooms.mood": {
+    "sounds": [
+      "backroomsbounded:mood/backrooms_mood_1",
+      "backroomsbounded:mood/backrooms_mood_2"
+    ],
+    "subtitle": "subtitles.backroomsbounded.ambient.mood"
+  },
+  "ambient.backrooms.heartbeat": {
+    "sounds": [
+      "backroomsbounded:panic/backrooms_heartbeat_noise"
+    ],
+    "subtitle": "subtitles.backroomsbounded.ambient.heartbeat"
+  },
+  "block.printer.printing": {
+    "sounds": [
+      "backroomsbounded:printer/printer_printing_noise"
+    ],
+    "subtitle": "subtitles.backroomsbounded.block.printer.printing"
+  }
+}
