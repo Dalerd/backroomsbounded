@@ -14,6 +14,9 @@ public class BackroomsConfig {
     private static final String CONFIG_FILE = "backroomsbounded.json";
     private static BackroomsConfig INSTANCE;
 
+    // =========================================
+    // BACTERIUM
+    // =========================================
     @SerializedName("bacterium_max_count")
     public int bacteriumMaxCount = 1;
 
@@ -41,6 +44,9 @@ public class BackroomsConfig {
     @SerializedName("bacterium_grab_chance")
     public float bacteriumGrabChance = 0.30f;
 
+    // =========================================
+    // ARMOR DECAY
+    // =========================================
     @SerializedName("armor_diamond_break_minutes")
     public int armorDiamondBreakMinutes = 8;
 
@@ -50,6 +56,9 @@ public class BackroomsConfig {
     @SerializedName("armor_mending_multiplier")
     public int armorMendingMultiplier = 4;
 
+    // =========================================
+    // MIMIC
+    // =========================================
     @SerializedName("mimic_max_count")
     public int mimicMaxCount = 3;
 
@@ -59,18 +68,72 @@ public class BackroomsConfig {
     @SerializedName("mimic_force_spawn_minutes")
     public int mimicForceSpawnMinutes = 8;
 
+    // =========================================
+    // GLITCH BLOCKS (ENTER/ESCAPE)
+    // =========================================
     @SerializedName("glitch_escape_chance")
     public float glitchEscapeChance = 0.80f;
 
     @SerializedName("glitch_enter_chance")
     public float glitchEnterChance = 0.35f;
 
+    // =========================================
+    // PANIC / SANITY
+    // =========================================
     @SerializedName("panic_darkness_threshold")
     public int panicDarknessThreshold = 400;
 
+    // =========================================
+    // BACTERIA SHROOM DETECTION
+    // =========================================
     @SerializedName("shroom_detection_range")
     public int shroomDetectionRange = 20;
 
+    // =========================================
+    // GENERATION - STRUCTURES
+    // =========================================
+    @SerializedName("generation_locker_chance")
+    public float generationLockerChance = 0.30f;
+
+    @SerializedName("generation_water_cooler_chance")
+    public float generationWaterCoolerChance = 0.05f;
+
+    @SerializedName("generation_barrel_chance")
+    public float generationBarrelChance = 0.05f;
+
+    @SerializedName("generation_creepy_sign_chance")
+    public float generationCreepySignChance = 0.03f;
+
+    @SerializedName("generation_moss_patch_chance")
+    public float generationMossPatchChance = 0.03f;
+
+    @SerializedName("generation_holes_chance")
+    public float generationHolesChance = 0.01f;
+
+    @SerializedName("generation_bacteria_cluster_chance")
+    public float generationBacteriaClusterChance = 0.02f;
+
+    // =========================================
+    // GENERATION - WALLS & COLUMNS
+    // =========================================
+    @SerializedName("generation_internal_wall_chance")
+    public float generationInternalWallChance = 0.4f;
+
+    @SerializedName("generation_column_chance")
+    public float generationColumnChance = 0.3f;
+
+    // =========================================
+    // GENERATION - WALLPAPER
+    // =========================================
+    @SerializedName("generation_sponge_wallpaper_chance")
+    public float generationSpongeWallpaperChance = 0.1f;
+
+    @SerializedName("generation_glitch_spread_chance")
+    public float generationGlitchSpreadChance = 0.00005f;
+
+    // =========================================
+    // METHODS
+    // =========================================
     public static BackroomsConfig getInstance() {
         if (INSTANCE == null) {
             INSTANCE = load();
@@ -90,7 +153,6 @@ public class BackroomsConfig {
             }
         }
 
-        // Create default config
         BackroomsConfig config = new BackroomsConfig();
         config.save();
         return config;
