@@ -12,9 +12,11 @@ public class ChatResponseHandler {
 
     private static final Map<UUID, List<String>> playerMessageHistory = new HashMap<>();
     private static final Map<UUID, Integer> replyCooldowns = new HashMap<>();
-    private static final int MAX_HISTORY = 5;
-    private static final int COOLDOWN_TICKS = 6000; // 5 minutes between replies
-    private static final float REPLY_CHANCE = 0.25f; // 25% chance to reply when triggered
+    private static final Map<UUID, Set<String>> usedReplies = new HashMap<>();
+    private static final int MAX_HISTORY = 8;
+    private static final int COOLDOWN_TICKS = 12000; // 10 minutes between replies
+    private static final float REPEAT_REPLY_CHANCE = 0.40f; // 40% chance when repeating
+    private static final float KEYWORD_REPLY_CHANCE = 0.15f; // 15% chance on keyword match
     private static final Random RANDOM = new Random();
 
     // Creepy replies based on message content
@@ -59,38 +61,71 @@ public class ChatResponseHandler {
             history.add(msgText);
             if (history.size() > MAX_HISTORY) history.remove(0);
 
-            // Check if player repeated the same message 3 times
-            if (history.size() >= 3) {
+            // Track used replies per player to avoid repeats
+            Set<String> used = usedReplies.computeIfAbsent(playerId, k -> new HashSet<>());
+
+            boolean shouldReply = false;
+
+            // Check if player repeated the same message twice (not three times)
+            if (history.size() >= 2) {
                 String last = history.get(history.size() - 1);
                 String secondLast = history.get(history.size() - 2);
-                String thirdLast = history.get(history.size() - 3);
+                if (last.equals(secondLast) && RANDOM.nextFloat() < REPEAT_REPLY_CHANCE) {
+                    shouldReply = true;
+                }
+            }
 
-                if (last.equals(secondLast) && secondLast.equals(thirdLast)) {
-                    // 25% chance to reply
-                    if (RANDOM.nextFloat() < REPLY_CHANCE) {
-                        String reply = getCreepyReply(msgText);
-                        player.sendMessage(Text.literal("<???> " + reply)
-                                .formatted(Formatting.DARK_GRAY, Formatting.ITALIC), false);
-                        replyCooldowns.put(playerId, COOLDOWN_TICKS);
+            // Check for keyword matches (single message can trigger)
+            if (!shouldReply) {
+                for (String keyword : KEYWORD_REPLIES.keySet()) {
+                    if (msgText.contains(keyword) && RANDOM.nextFloat() < KEYWORD_REPLY_CHANCE) {
+                        shouldReply = true;
+                        break;
                     }
                 }
+            }
+
+            if (shouldReply) {
+                String reply = getCreepyReply(msgText, used);
+                player.sendMessage(Text.literal("<???> " + reply)
+                        .formatted(Formatting.DARK_GRAY, Formatting.ITALIC), false);
+                replyCooldowns.put(playerId, COOLDOWN_TICKS);
+                used.add(reply);
+
+                // Reset used replies if we've gone through most of them
+                if (used.size() >= 8) used.clear();
             }
         });
     }
 
-    private static String getCreepyReply(String message) {
+    private static String getCreepyReply(String message, Set<String> usedReplies) {
         // Check for keyword matches
         for (Map.Entry<String, String[]> entry : KEYWORD_REPLIES.entrySet()) {
             if (message.contains(entry.getKey())) {
                 String[] replies = entry.getValue();
+                // Find a reply not used yet
+                List<String> unused = new ArrayList<>();
+                for (String r : replies) {
+                    if (!usedReplies.contains(r)) unused.add(r);
+                }
+                if (!unused.isEmpty()) {
+                    return unused.get(RANDOM.nextInt(unused.size()));
+                }
+                // All used, pick random anyway
                 return replies[RANDOM.nextInt(replies.length)];
             }
         }
-        // Generic creepy reply
+        // Generic creepy reply - avoid repeats
+        List<String> unusedGeneric = new ArrayList<>();
+        for (String r : GENERIC_REPLIES) {
+            if (!usedReplies.contains(r)) unusedGeneric.add(r);
+        }
+        if (!unusedGeneric.isEmpty()) {
+            return unusedGeneric.get(RANDOM.nextInt(unusedGeneric.size()));
+        }
         return GENERIC_REPLIES[RANDOM.nextInt(GENERIC_REPLIES.length)];
     }
 
-    // Decrement cooldowns
     public static void tick() {
         replyCooldowns.entrySet().removeIf(entry -> {
             entry.setValue(entry.getValue() - 1);

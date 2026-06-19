@@ -1,6 +1,7 @@
 package net.dalerd.backroomsbounded.event;
 
 import net.dalerd.backroomsbounded.block.ModBlocks;
+import net.dalerd.backroomsbounded.config.BackroomsConfig;
 import net.dalerd.backroomsbounded.world.gen.BackroomsDimension;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -11,7 +12,9 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 
@@ -23,13 +26,31 @@ public class BlockGlitchHandler {
 
     private static final Map<BlockPos, GlitchData> GLITCHED_BLOCKS = new HashMap<>();
     private static final Map<ChunkPos, Integer> GLITCH_CHUNK_COOLDOWNS = new HashMap<>();
+    private static final Map<ServerPlayerEntity, Integer> exitMessageCooldowns = new HashMap<>();
 
-    private static final double GLITCH_SPREAD_CHANCE = 0.00005; // 0.005% per block (was 0.1%)
-    private static final int GLITCH_SPREAD_INTERVAL = 200; // Check every 10 seconds (was 5)
-    private static final int GLITCH_LIFETIME = 200; // 10 seconds before reverting
+    private static final double GLITCH_SPREAD_CHANCE = 0.00005;
+    private static final int GLITCH_SPREAD_INTERVAL = 200;
+    private static final int GLITCH_LIFETIME = 200;
     private static final int SPREAD_RADIUS = 3;
-    private static final int CHUNK_COOLDOWN_RADIUS = 5; // 5 chunk radius cooldown
-    private static final int CHUNK_COOLDOWN_TICKS = 12000; // 10 minutes cooldown
+    private static final int CHUNK_COOLDOWN_RADIUS = 5;
+    private static final int CHUNK_COOLDOWN_TICKS = 12000;
+    private static final int EXIT_MESSAGE_COOLDOWN = 6000; // 5 minutes between exit messages
+
+    // Creepy exit messages
+    private static final String[] EXIT_MESSAGES = {
+            "???",
+            "a way out...",
+            "something shifted",
+            "the walls are thin here",
+            "a glitch in reality",
+            "an exit?",
+            "the barrier weakens",
+            "a tear... go now",
+            "reality is breaking",
+            "don't trust it",
+            "a door where there was none",
+            "something opened nearby"
+    };
 
     public static void register() {
 
@@ -48,7 +69,7 @@ public class BlockGlitchHandler {
                         GLITCHED_BLOCKS.put(pos, new GlitchData(originalState, world.getTime()));
 
                         if (player instanceof ServerPlayerEntity serverPlayer) {
-                            if (RANDOM.nextFloat() < 0.35f) {
+                            if (RANDOM.nextFloat() < BackroomsConfig.getInstance().glitchEnterChance) {
                                 ServerWorld backroomsWorld = serverPlayer.getServer()
                                         .getWorld(BackroomsDimension.BACKROOMS_LEVEL_KEY);
                                 if (backroomsWorld != null) {
@@ -74,7 +95,7 @@ public class BlockGlitchHandler {
             if (state.isOf(ModBlocks.GLITCH_BLOCK) && player instanceof ServerPlayerEntity serverPlayer) {
                 float roll = RANDOM.nextFloat();
 
-                if (roll < 0.80f) {
+                if (roll < BackroomsConfig.getInstance().glitchEscapeChance) {
                     ServerWorld overworld = serverPlayer.getServer().getOverworld();
                     serverPlayer.teleport(overworld, 0.5, 100, 0.5,
                             serverPlayer.getYaw(), serverPlayer.getPitch());
@@ -98,6 +119,12 @@ public class BlockGlitchHandler {
         // GLITCH SPREADING IN BACKROOMS
         // =====================================
         ServerTickEvents.END_SERVER_TICK.register(server -> {
+            // Decrement exit message cooldowns
+            exitMessageCooldowns.entrySet().removeIf(entry -> {
+                entry.setValue(entry.getValue() - 1);
+                return entry.getValue() <= 0;
+            });
+
             for (ServerWorld world : server.getWorlds()) {
                 if (world.getRegistryKey() != BackroomsDimension.BACKROOMS_LEVEL_KEY) continue;
 
@@ -120,6 +147,7 @@ public class BlockGlitchHandler {
 
     private static void spreadGlitches(ServerWorld world) {
         List<BlockPos> newGlitches = new ArrayList<>();
+        Set<ServerPlayerEntity> playersNearNewGlitch = new HashSet<>();
 
         world.getPlayers().forEach(player -> {
             BlockPos playerPos = player.getBlockPos();
@@ -134,7 +162,6 @@ public class BlockGlitchHandler {
                         if (state.isOf(ModBlocks.GLITCH_BLOCK)) continue;
                         if (state.getHardness(world, pos) < 0) continue;
 
-                        // Check if this chunk or nearby chunks are on cooldown
                         ChunkPos chunkPos = new ChunkPos(pos);
                         boolean isOnCooldown = false;
                         for (Map.Entry<ChunkPos, Integer> entry : GLITCH_CHUNK_COOLDOWNS.entrySet()) {
@@ -150,6 +177,10 @@ public class BlockGlitchHandler {
                         if (!isOnCooldown && RANDOM.nextFloat() < GLITCH_SPREAD_CHANCE) {
                             newGlitches.add(pos);
                             GLITCH_CHUNK_COOLDOWNS.put(chunkPos, CHUNK_COOLDOWN_TICKS);
+                            // Notify player if glitch spawned within 10 blocks
+                            if (player instanceof ServerPlayerEntity sp && playerPos.getSquaredDistance(pos) <= 100) {
+                                playersNearNewGlitch.add(sp);
+                            }
                         }
                     }
                 }
@@ -160,6 +191,16 @@ public class BlockGlitchHandler {
             BlockState originalState = world.getBlockState(pos);
             world.setBlockState(pos, ModBlocks.GLITCH_BLOCK.getDefaultState());
             GLITCHED_BLOCKS.put(pos, new GlitchData(originalState, world.getTime()));
+        }
+
+        // Send creepy exit message to players near newly spawned glitch blocks
+        for (ServerPlayerEntity player : playersNearNewGlitch) {
+            if (!exitMessageCooldowns.containsKey(player)) {
+                String msg = EXIT_MESSAGES[RANDOM.nextInt(EXIT_MESSAGES.length)];
+                player.sendMessage(Text.literal("<???> " + msg)
+                        .formatted(Formatting.DARK_GRAY, Formatting.ITALIC), true);
+                exitMessageCooldowns.put(player, EXIT_MESSAGE_COOLDOWN);
+            }
         }
     }
 

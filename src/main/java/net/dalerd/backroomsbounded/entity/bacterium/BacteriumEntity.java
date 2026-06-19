@@ -97,6 +97,23 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
     }
 
     // =========================================
+    // DIMENSIONS - Allow fitting in 2-block spaces
+    // =========================================
+    @Override
+    public void setPose(EntityPose pose) {
+        super.setPose(pose);
+        this.calculateDimensions();
+    }
+
+    @Override
+    public float getStepHeight() {
+        if (this.isCrouching()) {
+            return 0.6f; // Standard step height for 1.8 tall entities
+        }
+        return super.getStepHeight();
+    }
+
+    // =========================================
     // GRAB SYSTEM
     // =========================================
     public boolean isGrabbing() { return this.dataTracker.get(GRABBING); }
@@ -146,22 +163,14 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
 
         if (isGrabbing() && grabbedPlayer != null && !this.getWorld().isClient) {
             grabTimer++;
-
             double holdY = this.getY() + 1.5;
-            grabbedPlayer.refreshPositionAndAngles(
-                    this.getX(), holdY, this.getZ(),
-                    grabbedPlayer.getYaw(), grabbedPlayer.getPitch()
-            );
+            grabbedPlayer.refreshPositionAndAngles(this.getX(), holdY, this.getZ(), grabbedPlayer.getYaw(), grabbedPlayer.getPitch());
             grabbedPlayer.setVelocity(0, 0, 0);
             grabbedPlayer.velocityModified = true;
-
             if (grabbedPlayer instanceof ServerPlayerEntity sp) {
-                sp.addStatusEffect(new StatusEffectInstance(
-                        StatusEffects.DARKNESS, 20, 0, false, false));
-                sp.addStatusEffect(new StatusEffectInstance(
-                        StatusEffects.NAUSEA, 20, 0, false, false));
+                sp.addStatusEffect(new StatusEffectInstance(StatusEffects.DARKNESS, 20, 0, false, false));
+                sp.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 20, 0, false, false));
             }
-
             int grabDurationTicks = CONFIG.bacteriumGrabDurationSeconds * 20;
             if (grabTimer >= grabDurationTicks && !grabKillTriggered) {
                 grabKillTriggered = true;
@@ -171,24 +180,13 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
         }
     }
 
-    @Override
-    public boolean canStartRiding(Entity vehicle) { return false; }
-    @Override
-    protected void tickControlled(PlayerEntity controllingPlayer, Vec3d movementInput) {}
+    @Override public boolean canStartRiding(Entity vehicle) { return false; }
+    @Override protected void tickControlled(PlayerEntity controllingPlayer, Vec3d movementInput) {}
+    public static boolean existsInWorld(ServerWorld world) { return !world.getEntitiesByType(ModEntities.BACTERIUM, entity -> true).isEmpty(); }
 
-    public static boolean existsInWorld(ServerWorld world) {
-        return !world.getEntitiesByType(ModEntities.BACTERIUM, entity -> true).isEmpty();
-    }
-
-    // =========================================
-    // DIFFICULTY SYSTEM
-    // =========================================
     public float getDifficultyMultiplier() {
-        return switch (this.getWorld().getDifficulty()) {
-            case PEACEFUL -> 0.0f; case EASY -> 0.7f; case NORMAL -> 1.0f; case HARD -> 1.5f;
-        };
+        return switch (this.getWorld().getDifficulty()) { case PEACEFUL -> 0.0f; case EASY -> 0.7f; case NORMAL -> 1.0f; case HARD -> 1.5f; };
     }
-
     @Override public boolean canImmediatelyDespawn(double d) { return false; }
     @Override public boolean isPersistent() { return true; }
     @Override public int getDespawnCounter() { return 0; }
@@ -200,6 +198,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
         if (this.dataTracker.get(CROUCHING) != c) {
             this.dataTracker.set(CROUCHING, c);
             this.setPose(c ? EntityPose.CROUCHING : EntityPose.STANDING);
+            this.calculateDimensions(); // Force hitbox recalculation
             updateSpeed();
         }
     }
@@ -207,10 +206,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
     public void playerOpenedDoor() { doorsOpened++; updateLearning(); }
     public void playerOpenedLocker() { lockersOpened++; updateLearning(); }
     public void playerPlacedBlock() { blocksPlacedByPlayer++; updateLearning(); }
-    private void updateLearning() {
-        int total = doorsOpened + lockersOpened + blocksPlacedByPlayer;
-        this.dataTracker.set(LEARNING_LEVEL, Math.min(total / 5, 3));
-    }
+    private void updateLearning() { this.dataTracker.set(LEARNING_LEVEL, Math.min((doorsOpened + lockersOpened + blocksPlacedByPlayer) / 5, 3)); }
     public int getLearningLevel() { return this.dataTracker.get(LEARNING_LEVEL); }
     public boolean canOpenDoors() { return getLearningLevel() >= 1; }
     public boolean canOpenLockers() { return getLearningLevel() >= 2; }
@@ -252,42 +248,25 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
 
     private PlayState groundController(AnimationState<BacteriumEntity> state) {
         if (isDead()) return PlayState.STOP;
-        if (isRunning() && !isGrabbing()) {
-            state.setAnimation(RawAnimation.begin().thenLoop("animation.bacterium.ground_run"));
-        } else if (state.isMoving() && !isGrabbing()) {
-            state.setAnimation(RawAnimation.begin().thenLoop("animation.bacterium.ground_walk"));
-        } else if (isCheckingLocker()) {
-            state.setAnimation(RawAnimation.begin().thenPlay("animation.bacterium.checking_locker"));
-        } else {
-            state.setAnimation(RawAnimation.begin().thenLoop("animation.bacterium.ground_idle"));
-        }
+        if (isRunning() && !isGrabbing()) state.setAnimation(RawAnimation.begin().thenLoop("animation.bacterium.ground_run"));
+        else if (state.isMoving() && !isGrabbing()) state.setAnimation(RawAnimation.begin().thenLoop("animation.bacterium.ground_walk"));
+        else if (isCheckingLocker()) state.setAnimation(RawAnimation.begin().thenPlay("animation.bacterium.checking_locker"));
+        else state.setAnimation(RawAnimation.begin().thenLoop("animation.bacterium.ground_idle"));
         return PlayState.CONTINUE;
     }
 
     private PlayState attackController(AnimationState<BacteriumEntity> state) {
-        if (handSwinging && !isGrabbing()) {
-            state.setAnimation(RawAnimation.begin().thenPlay("animation.bacterium.attack"));
-            return PlayState.CONTINUE;
-        }
+        if (handSwinging && !isGrabbing()) { state.setAnimation(RawAnimation.begin().thenPlay("animation.bacterium.attack")); return PlayState.CONTINUE; }
         return PlayState.STOP;
     }
 
     private PlayState quirkController(AnimationState<BacteriumEntity> state) {
-        if (age % 200 < 10 && !isJumpscaring() && !isGrabbing()) {
-            state.setAnimation(RawAnimation.begin()
-                    .thenPlay("animation.bacterium.quirk")
-                    .thenPlay("animation.bacterium.quirk_1")
-                    .thenPlay("animation.bacterium.quirk_2"));
-            return PlayState.CONTINUE;
-        }
+        if (age % 200 < 10 && !isJumpscaring() && !isGrabbing()) { state.setAnimation(RawAnimation.begin().thenPlay("animation.bacterium.quirk").thenPlay("animation.bacterium.quirk_1").thenPlay("animation.bacterium.quirk_2")); return PlayState.CONTINUE; }
         return PlayState.STOP;
     }
 
     private PlayState jumpscareController(AnimationState<BacteriumEntity> state) {
-        if (isGrabbing()) {
-            state.setAnimation(RawAnimation.begin().thenLoop("animation.bacterium.jumpscare"));
-            return PlayState.CONTINUE;
-        }
+        if (isGrabbing()) { state.setAnimation(RawAnimation.begin().thenLoop("animation.bacterium.jumpscare")); return PlayState.CONTINUE; }
         return PlayState.STOP;
     }
 
@@ -295,18 +274,15 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
 
     @Override public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
-        nbt.putInt("DoorsOpened", doorsOpened);
-        nbt.putInt("LockersOpened", lockersOpened);
-        nbt.putInt("BlocksPlaced", blocksPlacedByPlayer);
-        nbt.putInt("LearningLevel", getLearningLevel());
+        nbt.putInt("DoorsOpened", doorsOpened); nbt.putInt("LockersOpened", lockersOpened);
+        nbt.putInt("BlocksPlaced", blocksPlacedByPlayer); nbt.putInt("LearningLevel", getLearningLevel());
         BlockPos s = getSuspiciousLocation();
         nbt.putInt("SuspiciousX", s.getX()); nbt.putInt("SuspiciousY", s.getY()); nbt.putInt("SuspiciousZ", s.getZ());
     }
 
     @Override public void readCustomDataFromNbt(NbtCompound nbt) {
         super.readCustomDataFromNbt(nbt);
-        doorsOpened = nbt.getInt("DoorsOpened");
-        lockersOpened = nbt.getInt("LockersOpened");
+        doorsOpened = nbt.getInt("DoorsOpened"); lockersOpened = nbt.getInt("LockersOpened");
         blocksPlacedByPlayer = nbt.getInt("BlocksPlaced");
         this.dataTracker.set(LEARNING_LEVEL, nbt.getInt("LearningLevel"));
         if (nbt.contains("SuspiciousX"))

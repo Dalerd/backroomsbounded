@@ -406,26 +406,34 @@ public class BacteriumAI extends Goal {
 
     private void teleportToStalkPosition(PlayerEntity player) {
         int angle = random.nextInt(360);
-        int dist = 12 + random.nextInt(9);
+        int dist = 20 + random.nextInt(11); // 20-30 blocks away
         double rad = Math.toRadians(angle);
         int offsetX = (int)(Math.cos(rad) * dist);
         int offsetZ = (int)(Math.sin(rad) * dist);
         BlockPos targetPos = player.getBlockPos().add(offsetX, 0, offsetZ);
-        for (int attempt = 0; attempt < 12; attempt++) {
-            BlockPos checkPos = targetPos.add(random.nextInt(8)-4, 0, random.nextInt(8)-4);
+        // Find position with good cover but also a clear view of the player
+        for (int attempt = 0; attempt < 15; attempt++) {
+            BlockPos checkPos = targetPos.add(random.nextInt(10)-5, 0, random.nextInt(10)-5);
             BlockPos safePos = findSafePosition(checkPos);
             if (safePos != null) {
                 int coverScore = 0;
+                boolean hasLineOfSight = false;
                 for (var dir : new BlockPos[]{checkPos.north(), checkPos.south(), checkPos.east(), checkPos.west()}) {
                     if (bacterium.getWorld().getBlockState(dir).isSolid()) coverScore++;
                 }
-                if (coverScore >= 2 || random.nextFloat() < 0.4f) {
+                // Check if there's at least partial line of sight to player
+                BlockPos midPoint = new BlockPos(
+                        (safePos.getX() + player.getBlockX()) / 2, player.getBlockY(),
+                        (safePos.getZ() + player.getBlockZ()) / 2);
+                if (!bacterium.getWorld().getBlockState(midPoint.up()).isSolid()) hasLineOfSight = true;
+
+                if (coverScore >= 1 && hasLineOfSight) {
                     teleportBacterium(new BlockPos(safePos.getX(), player.getBlockY(), safePos.getZ()));
                     bacterium.setRunning(false);
                     bacterium.getLookControl().lookAt(player);
                     stalkPosition = safePos;
                     bacterium.getWorld().playSound(null, safePos,
-                            SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.HOSTILE, 0.1f, 0.5f);
+                            SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.HOSTILE, 0.08f, 0.5f);
                     return;
                 }
             }
