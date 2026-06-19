@@ -74,7 +74,6 @@ public class BackroomsBounded implements ModInitializer {
 		SanityEvents.register();
 		SanityChatMessages.register();
 		SanityFoodHandler.register();
-		SanityDesktopFiles.register();
 		SilhouetteSpawner.register();
 
 		// Register panic command for testing
