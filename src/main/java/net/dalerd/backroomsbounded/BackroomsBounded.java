@@ -3,6 +3,7 @@ package net.dalerd.backroomsbounded;
 import net.dalerd.backroomsbounded.block.ModBlocks;
 import net.dalerd.backroomsbounded.block.entity.ModBlockEntities;
 import net.dalerd.backroomsbounded.command.PanicCommand;
+import net.dalerd.backroomsbounded.config.BackroomsConfig;
 import net.dalerd.backroomsbounded.entity.ModEntities;
 import net.dalerd.backroomsbounded.event.*;
 import net.dalerd.backroomsbounded.item.ModItems;
@@ -36,6 +37,8 @@ public class BackroomsBounded implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Initializing BackroomsBounded");
+
+		BackroomsConfig config = BackroomsConfig.getInstance();
 
 		// Register blocks and items first
 		ModBlocks.registerModBlocks();

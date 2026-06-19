@@ -1,5 +1,6 @@
 package net.dalerd.backroomsbounded.entity.bacterium;
 
+import net.dalerd.backroomsbounded.config.BackroomsConfig;
 import net.dalerd.backroomsbounded.entity.ModEntities;
 import net.minecraft.entity.*;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
@@ -29,9 +30,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
-    private static final float WALK_SPEED = 0.22f;
-    private static final float RUN_SPEED = 0.29f;
-    private static final float SPRINT_SPEED = 0.37f;
+    private static final BackroomsConfig CONFIG = BackroomsConfig.getInstance();
     private static final float CROUCH_PENALTY = 0.7f;
 
     // Grab attack system
@@ -39,7 +38,6 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
             DataTracker.registerData(BacteriumEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private PlayerEntity grabbedPlayer = null;
     private int grabTimer = 0;
-    private static final int ESCAPE_CLICKS_NEEDED = 3;
     public int escapeClicks = 0;
     private boolean grabKillTriggered = false;
 
@@ -73,7 +71,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
     public static DefaultAttributeContainer.Builder createAttributes() {
         return HostileEntity.createHostileAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 9999)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, WALK_SPEED)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, CONFIG.bacteriumWalkSpeed)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 9)
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 100)
                 .add(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE, 9999);
@@ -124,7 +122,6 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
         this.grabKillTriggered = false;
         this.setGrabbing(false);
         this.setJumpscaring(false);
-        // Knock player back when released
         if (wasGrabbed != null) {
             wasGrabbed.setVelocity(
                     (this.getX() - wasGrabbed.getX()) * 0.5,
@@ -138,7 +135,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
     public void playerClickedToEscape() {
         if (!isGrabbing() || grabbedPlayer == null) return;
         escapeClicks++;
-        if (escapeClicks >= ESCAPE_CLICKS_NEEDED) {
+        if (escapeClicks >= CONFIG.bacteriumGrabEscapeClicks) {
             stopGrabbing();
         }
     }
@@ -147,11 +144,9 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
     public void tick() {
         super.tick();
 
-        // Handle grab timer
         if (isGrabbing() && grabbedPlayer != null && !this.getWorld().isClient) {
             grabTimer++;
 
-            // Hold player 1 block + 8 pixels (0.5 blocks) above bacterium's feet
             double holdY = this.getY() + 1.5;
             grabbedPlayer.refreshPositionAndAngles(
                     this.getX(), holdY, this.getZ(),
@@ -160,7 +155,6 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
             grabbedPlayer.setVelocity(0, 0, 0);
             grabbedPlayer.velocityModified = true;
 
-            // Red static effect via darkness + nausea
             if (grabbedPlayer instanceof ServerPlayerEntity sp) {
                 sp.addStatusEffect(new StatusEffectInstance(
                         StatusEffects.DARKNESS, 20, 0, false, false));
@@ -168,8 +162,8 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
                         StatusEffects.NAUSEA, 20, 0, false, false));
             }
 
-            // After 3 seconds, trigger kill if not escaped
-            if (grabTimer >= 80 && !grabKillTriggered) {
+            int grabDurationTicks = CONFIG.bacteriumGrabDurationSeconds * 20;
+            if (grabTimer >= grabDurationTicks && !grabKillTriggered) {
                 grabKillTriggered = true;
                 grabbedPlayer.damage(this.getDamageSources().mobAttack(this), Float.MAX_VALUE);
                 stopGrabbing();
@@ -239,9 +233,9 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
         float dm = getDifficultyMultiplier();
         float cm = isCrouching() ? CROUCH_PENALTY : 1.0f;
         if (attr != null) {
-            if (isSprintBoosting()) attr.setBaseValue(SPRINT_SPEED * dm * cm);
-            else if (isRunning()) attr.setBaseValue(RUN_SPEED * dm * cm);
-            else attr.setBaseValue(WALK_SPEED * dm * cm);
+            if (isSprintBoosting()) attr.setBaseValue(CONFIG.bacteriumSprintSpeed * dm * cm);
+            else if (isRunning()) attr.setBaseValue(CONFIG.bacteriumRunSpeed * dm * cm);
+            else attr.setBaseValue(CONFIG.bacteriumWalkSpeed * dm * cm);
         }
     }
 
@@ -258,7 +252,6 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
 
     private PlayState groundController(AnimationState<BacteriumEntity> state) {
         if (isDead()) return PlayState.STOP;
-        // Keep idle playing during grab so jumpscare overlays on top
         if (isRunning() && !isGrabbing()) {
             state.setAnimation(RawAnimation.begin().thenLoop("animation.bacterium.ground_run"));
         } else if (state.isMoving() && !isGrabbing()) {
@@ -281,7 +274,10 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
 
     private PlayState quirkController(AnimationState<BacteriumEntity> state) {
         if (age % 200 < 10 && !isJumpscaring() && !isGrabbing()) {
-            state.setAnimation(RawAnimation.begin().thenPlay("animation.bacterium.quirk").thenPlay("animation.bacterium.quirk_1").thenPlay("animation.bacterium.quirk_2"));
+            state.setAnimation(RawAnimation.begin()
+                    .thenPlay("animation.bacterium.quirk")
+                    .thenPlay("animation.bacterium.quirk_1")
+                    .thenPlay("animation.bacterium.quirk_2"));
             return PlayState.CONTINUE;
         }
         return PlayState.STOP;
@@ -289,7 +285,6 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
 
     private PlayState jumpscareController(AnimationState<BacteriumEntity> state) {
         if (isGrabbing()) {
-            // Overlay jumpscare on top of idle
             state.setAnimation(RawAnimation.begin().thenLoop("animation.bacterium.jumpscare"));
             return PlayState.CONTINUE;
         }

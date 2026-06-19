@@ -1,6 +1,7 @@
 package net.dalerd.backroomsbounded.entity.bacterium;
 
 import net.dalerd.backroomsbounded.block.ModBlocks;
+import net.dalerd.backroomsbounded.config.BackroomsConfig;
 import net.dalerd.backroomsbounded.event.CarpetSoundReducer;
 import net.dalerd.backroomsbounded.sanity.SanityManager;
 import net.dalerd.backroomsbounded.sound.ModSounds;
@@ -837,16 +838,15 @@ public class BacteriumAI extends Goal {
         double distance = bacterium.squaredDistanceTo(targetPlayer);
 
         // Within 2 blocks = GRAB ATTACK
-        if (distance < 4 && random.nextFloat() < 0.3f) { // 30% chance to grab
+        if (distance < 4 && random.nextFloat() < BackroomsConfig.getInstance().bacteriumGrabChance) {
             startGrabAttack(targetPlayer);
             return;
         }
 
         // Regular hit
-        bacterium.swingHand(net.minecraft.util.Hand.MAIN_HAND);
         float damagePerHit = switch (bacterium.getWorld().getDifficulty()) {
-            case EASY, NORMAL -> 8.0f;
-            case HARD -> 9.0f;
+            case EASY, NORMAL -> BackroomsConfig.getInstance().bacteriumDamageEasyNormal;
+            case HARD -> BackroomsConfig.getInstance().bacteriumDamageHard;
             default -> 4.0f;
         };
         targetPlayer.damage(bacterium.getDamageSources().mobAttack(bacterium), damagePerHit);
