@@ -12,7 +12,7 @@
     "frame": "task",
     "show_toast": true,
     "announce_to_chat": true,
-    "background": "minecraft:textures/block/yellow_terracotta.png"
+    "background": "backroomsbounded:textures/block/wallpaper_block.png"
   },
   "criteria": {
     "enter_backrooms": {

@@ -1,5 +1,6 @@
 package net.dalerd.backroomsbounded.entity.mimic;
 
+import net.dalerd.backroomsbounded.advancement.AdvancementManager;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
@@ -122,6 +123,12 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
             aggressionTimerCompleted = true;
             if (new Random().nextFloat() < 0.5f) {
                 this.setAggressive(true);
+
+                PlayerEntity nearest = this.getWorld().getClosestPlayer(this, 64);
+
+                if (nearest instanceof ServerPlayerEntity serverPlayer) {
+                    AdvancementManager.findMimic(serverPlayer);
+                }
             }
         }
     }
@@ -133,6 +140,12 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
         }
         if (aggressionTimerCompleted) {
             this.setAggressive(true);
+
+            PlayerEntity nearest = this.getWorld().getClosestPlayer(this, 64);
+
+            if (nearest instanceof ServerPlayerEntity serverPlayer) {
+                AdvancementManager.findMimic(serverPlayer);
+            }
         }
     }
 

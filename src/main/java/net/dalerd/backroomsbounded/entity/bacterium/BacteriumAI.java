@@ -1,5 +1,6 @@
 package net.dalerd.backroomsbounded.entity.bacterium;
 
+import net.dalerd.backroomsbounded.advancement.AdvancementManager;
 import net.dalerd.backroomsbounded.block.ModBlocks;
 import net.dalerd.backroomsbounded.config.BackroomsConfig;
 import net.dalerd.backroomsbounded.event.CarpetSoundReducer;
@@ -275,6 +276,11 @@ public class BacteriumAI extends Goal {
         // CHASE / HUNTING BEHAVIOR
         // =========================================
         if (distance < 400 || isChasing) {
+
+            if (!isChasing && targetPlayer instanceof ServerPlayerEntity serverPlayer) {
+                AdvancementManager.findBacterium(serverPlayer);
+            }
+
             isChasing = true;
             isObserving = false;
             isStalking = false;

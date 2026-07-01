@@ -1,5 +1,7 @@
 package net.dalerd.backroomsbounded.event;
 
+import net.dalerd.backroomsbounded.advancement.AdvancementManager;
+import net.dalerd.backroomsbounded.advancement.ModAdvancements;
 import net.dalerd.backroomsbounded.world.gen.BackroomsDimension;
 
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
@@ -101,9 +103,12 @@ public class RandomBackroomsTeleportHandler {
         if (safePos != null) {
             player.teleport(backroomsWorld, safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5,
                     player.getYaw(), player.getPitch());
+            AdvancementManager.enterBackrooms(player);
         } else {
             player.teleport(backroomsWorld, 0.5, 8, 0.5, player.getYaw(), player.getPitch());
+            AdvancementManager.enterBackrooms(player);
         }
+
     }
 
     // =========================================

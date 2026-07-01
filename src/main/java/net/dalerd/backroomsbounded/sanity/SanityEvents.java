@@ -1,6 +1,6 @@
 package net.dalerd.backroomsbounded.sanity;
 
-import net.dalerd.backroomsbounded.advancement.AdvancementTriggerHandler;
+import net.dalerd.backroomsbounded.advancement.AdvancementManager;
 import net.dalerd.backroomsbounded.sound.ModSounds;
 import net.dalerd.backroomsbounded.world.gen.BackroomsDimension;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -88,7 +88,7 @@ public class SanityEvents {
 
         // Grant panic attack advancement at 90+
         if (panic >= 90 && !panicAdvancementGranted.contains(player.getUuid())) {
-            AdvancementTriggerHandler.onPanicAttack(player);
+            AdvancementManager.panicAttack(player);
             panicAdvancementGranted.add(player.getUuid());
         }
 

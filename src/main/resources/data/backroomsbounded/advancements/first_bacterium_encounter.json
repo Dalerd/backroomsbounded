@@ -7,24 +7,16 @@
       "text": "Something Lurks"
     },
     "description": {
-      "text": "Encounter a bacterium for the first time"
+      "text": "Encounter a Bacterium"
     },
-    "frame": "task",
-    "show_toast": true,
-    "announce_to_chat": true
+    "frame": "task"
   },
+
   "parent": "backroomsbounded:root",
+
   "criteria": {
-    "see_bacterium": {
-      "trigger": "minecraft:player_interacted_with_entity",
-      "conditions": {
-        "entity": {
-          "type": "backroomsbounded:bacterium"
-        }
-      }
+    "done": {
+      "trigger": "minecraft:impossible"
     }
-  },
-  "requirements": [
-    ["see_bacterium"]
-  ]
+  }
 }

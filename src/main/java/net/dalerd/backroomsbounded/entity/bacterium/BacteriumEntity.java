@@ -1,6 +1,6 @@
 package net.dalerd.backroomsbounded.entity.bacterium;
 
-import net.dalerd.backroomsbounded.advancement.AdvancementTriggerHandler;
+import net.dalerd.backroomsbounded.advancement.AdvancementManager;
 import net.dalerd.backroomsbounded.config.BackroomsConfig;
 import net.dalerd.backroomsbounded.entity.ModEntities;
 import net.minecraft.block.BlockState;
@@ -196,7 +196,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
             if (wasGrabbed instanceof ServerPlayerEntity sp && wasGrabbed.isAlive() && !this.advancementGranted) {
                 float health = sp.getHealth();
                 if (health < 10.0f) {
-                    AdvancementTriggerHandler.onSurviveBacteriumGrab(sp);
+                    AdvancementManager.surviveGrab(sp);
                     this.advancementGranted = true;
                 }
             }

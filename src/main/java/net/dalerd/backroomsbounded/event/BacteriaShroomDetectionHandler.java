@@ -1,6 +1,6 @@
 package net.dalerd.backroomsbounded.event;
 
-import net.dalerd.backroomsbounded.advancement.AdvancementTriggerHandler;
+import net.dalerd.backroomsbounded.advancement.AdvancementManager;
 import net.dalerd.backroomsbounded.block.ModBlocks;
 import net.dalerd.backroomsbounded.entity.ModEntities;
 import net.dalerd.backroomsbounded.entity.bacterium.BacteriumAI;
@@ -169,7 +169,7 @@ public class BacteriaShroomDetectionHandler {
 
             // Grant advancement when 3 detections reached
             if (detections >= 3) {
-                AdvancementTriggerHandler.onBacteriaShroomTriggered(player);
+
             }
 
         } else if (tracker.strikeCount == 2) {

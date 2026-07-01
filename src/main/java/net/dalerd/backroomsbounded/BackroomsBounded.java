@@ -1,6 +1,6 @@
 package net.dalerd.backroomsbounded;
 
-import net.dalerd.backroomsbounded.advancement.AdvancementTriggerHandler;
+import net.dalerd.backroomsbounded.advancement.AdvancementManager;
 import net.dalerd.backroomsbounded.block.ModBlocks;
 import net.dalerd.backroomsbounded.block.entity.ModBlockEntities;
 import net.dalerd.backroomsbounded.command.LocateOfficeCommand;
@@ -14,6 +14,7 @@ import net.dalerd.backroomsbounded.sanity.*;
 import net.dalerd.backroomsbounded.event.BacteriaShroomDetectionHandler;
 import net.dalerd.backroomsbounded.sound.ModSounds;
 import net.dalerd.backroomsbounded.event.BackroomsAmbientSoundHandler;
+import net.dalerd.backroomsbounded.util.AdvancementHelper;
 import net.dalerd.backroomsbounded.world.gen.BackroomsChunkGenerator;
 import net.fabricmc.api.ModInitializer;
 import net.dalerd.backroomsbounded.event.MimicSpawnHandler;
@@ -69,7 +70,6 @@ public class BackroomsBounded implements ModInitializer {
 		ChatResponseHandler.register();
 		ArmorDecayHandler.register();
 		AnvilRepairHandler.register();
-		AdvancementTriggerHandler.register();
 
 		ModEntities.registerEntities();
 
