@@ -1,5 +1,6 @@
 package net.dalerd.backroomsbounded.event;
 
+import net.dalerd.backroomsbounded.advancement.AdvancementTriggerHandler;
 import net.dalerd.backroomsbounded.block.ModBlocks;
 import net.dalerd.backroomsbounded.config.BackroomsConfig;
 import net.dalerd.backroomsbounded.world.gen.BackroomsDimension;
@@ -96,10 +97,15 @@ public class BlockGlitchHandler {
                 float roll = RANDOM.nextFloat();
 
                 if (roll < BackroomsConfig.getInstance().glitchEscapeChance) {
+                    // SUCCESSFUL ESCAPE
                     ServerWorld overworld = serverPlayer.getServer().getOverworld();
                     serverPlayer.teleport(overworld, 0.5, 100, 0.5,
                             serverPlayer.getYaw(), serverPlayer.getPitch());
                 } else {
+                    // FAILED ESCAPE - Player stays in backrooms
+                    // Grant the failed_escape advancement
+                    AdvancementTriggerHandler.onFailedEscape(serverPlayer);
+
                     GlitchData data = GLITCHED_BLOCKS.get(pos);
                     if (data != null) {
                         world.setBlockState(pos, data.originalState);

@@ -1,5 +1,6 @@
 package net.dalerd.backroomsbounded.sanity;
 
+import net.dalerd.backroomsbounded.advancement.AdvancementTriggerHandler;
 import net.dalerd.backroomsbounded.sound.ModSounds;
 import net.dalerd.backroomsbounded.world.gen.BackroomsDimension;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -17,26 +18,26 @@ public class SanityEvents {
 
     private static final Random RANDOM = new Random();
     private static int tickCounter = 0;
-    private static final int PANIC_CHECK_INTERVAL = 100; // Every 5 seconds
+    private static final int PANIC_CHECK_INTERVAL = 100;
 
-    // Track heartbeat sound per player to avoid spam
     private static final Map<UUID, Integer> heartbeatCooldowns = new HashMap<>();
-    private static final int HEARTBEAT_COOLDOWN = 60; // 3 seconds between heartbeats
+    private static final int HEARTBEAT_COOLDOWN = 60;
+
+    // Track which players already got the panic attack advancement
+    private static final Set<UUID> panicAdvancementGranted = new HashSet<>();
 
     public static void register() {
-        // Reset panic on death
         ServerLivingEntityEvents.AFTER_DEATH.register((entity, damageSource) -> {
             if (entity instanceof ServerPlayerEntity player) {
                 SanityManager.onPlayerDeath(player);
                 heartbeatCooldowns.remove(player.getUuid());
+                panicAdvancementGranted.remove(player.getUuid()); // Reset on death so they can earn it again
             }
         });
 
-        // Panic update tick
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             tickCounter++;
 
-            // Decrement heartbeat cooldowns
             heartbeatCooldowns.entrySet().removeIf(entry -> {
                 entry.setValue(entry.getValue() - 1);
                 return entry.getValue() <= 0;
@@ -76,16 +77,22 @@ public class SanityEvents {
         if (panic < SanityManager.MIN_PANIC) SanityManager.setPanic(player, SanityManager.MIN_PANIC);
         if (panic > SanityManager.MAX_PANIC) SanityManager.setPanic(player, SanityManager.MAX_PANIC);
 
-        // Heartbeat sound at high panic (70+) - plays every 3 seconds
+        // Heartbeat sound at high panic (70+)
         if (panic >= 70 && !heartbeatCooldowns.containsKey(player.getUuid())) {
             float volume = panic >= 90 ? 1.0f : 0.6f;
-            float pitch = 0.8f + (panic - 70) * 0.01f; // Gets faster as panic rises
+            float pitch = 0.8f + (panic - 70) * 0.01f;
             player.playSoundToPlayer(ModSounds.AMBIENT_HEARTBEAT,
                     SoundCategory.PLAYERS, volume, pitch);
             heartbeatCooldowns.put(player.getUuid(), HEARTBEAT_COOLDOWN);
         }
 
-        // Apply random panic effects at high panic (81-100) - 10% chance every 5 seconds
+        // Grant panic attack advancement at 90+
+        if (panic >= 90 && !panicAdvancementGranted.contains(player.getUuid())) {
+            AdvancementTriggerHandler.onPanicAttack(player);
+            panicAdvancementGranted.add(player.getUuid());
+        }
+
+        // Apply random panic effects at high panic (81-100)
         if (panic >= 81 && RANDOM.nextFloat() < 0.10f) {
             applyRandomPanicEffect(player);
         }

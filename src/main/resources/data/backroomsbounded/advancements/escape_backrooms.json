@@ -1,0 +1,33 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:ender_pearl"
+    },
+    "title": {
+      "text": "Back to Reality"
+    },
+    "description": {
+      "text": "Successfully escape the backrooms"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "backroomsbounded:root",
+  "criteria": {
+    "escape": {
+      "trigger": "minecraft:changed_dimension",
+      "conditions": {
+        "from": "backroomsbounded:backrooms",
+        "to": "minecraft:overworld"
+      }
+    }
+  },
+  "requirements": [
+    ["escape"]
+  ],
+  "rewards": {
+    "experience": 500
+  }
+}

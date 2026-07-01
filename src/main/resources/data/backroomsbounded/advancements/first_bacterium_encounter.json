@@ -1,0 +1,30 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:bone"
+    },
+    "title": {
+      "text": "Something Lurks"
+    },
+    "description": {
+      "text": "Encounter a bacterium for the first time"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "parent": "backroomsbounded:root",
+  "criteria": {
+    "see_bacterium": {
+      "trigger": "minecraft:player_interacted_with_entity",
+      "conditions": {
+        "entity": {
+          "type": "backroomsbounded:bacterium"
+        }
+      }
+    }
+  },
+  "requirements": [
+    ["see_bacterium"]
+  ]
+}

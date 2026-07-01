@@ -1,0 +1,28 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:compass"
+    },
+    "title": {
+      "text": "Deep Office Explorer"
+    },
+    "description": {
+      "text": "Travel 3000 blocks into an office ring"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "parent": "backroomsbounded:enter_office",
+  "criteria": {
+    "deep_office": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["deep_office"]
+  ],
+  "rewards": {
+    "experience": 200
+  }
+}

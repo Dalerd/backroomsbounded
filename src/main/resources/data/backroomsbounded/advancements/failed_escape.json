@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:barrier"
+    },
+    "title": {
+      "text": "Glitched Out"
+    },
+    "description": {
+      "text": "Another Time"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "backroomsbounded:escape_backrooms",
+  "criteria": {
+    "failed_escape": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["failed_escape"]
+  ]
+}

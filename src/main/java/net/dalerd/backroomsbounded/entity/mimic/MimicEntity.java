@@ -4,6 +4,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
@@ -27,6 +28,8 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
 
     private static final TrackedData<String> COPIED_PLAYER_NAME =
             DataTracker.registerData(MimicEntity.class, TrackedDataHandlerRegistry.STRING);
+    private static final TrackedData<Boolean> IS_SNEAKING =
+            DataTracker.registerData(MimicEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> IS_AGGRESSIVE =
             DataTracker.registerData(MimicEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
@@ -35,11 +38,19 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
     private int inventoryCopyCooldown = 0;
     private int verityMessageCount = 0;
 
-    private static final String[] FALLBACK_NAMES = {
-            "Verity", "Alex", "Kai", "Rex", "Mark", "Jade", "Sam", "Casey",
-            "Morgan", "Riley", "Jordan", "Avery", "Steve", "Yes", "Quinn",
-            "Blake", "Taylor", "Drew", "Skylar", "Caseoh"
-    };
+    // Aggression system
+    private boolean aggressionTimerCompleted = false;
+    private int proximityTicks = 0;
+    private static final int PROXIMITY_THRESHOLD = 200; // 10 seconds
+
+    // Provoke system
+    private int hitCount = 0;
+    private int hitTimer = 0;
+    private static final int HIT_WINDOW = 60;
+    private static final int HITS_TO_PROVOKE = 2;
+
+    private static final String[] DEFAULT_NAMES = {"Steve", "Alex"};
+    private static final String[] SPECIAL_NAMES = {"Caseoh", "Verity", "Avery"};
 
     public MimicEntity(EntityType<? extends HostileEntity> entityType, World world) {
         super(entityType, world);
@@ -62,6 +73,7 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(COPIED_PLAYER_NAME, "");
+        builder.add(IS_SNEAKING, false);
         builder.add(IS_AGGRESSIVE, false);
     }
 
@@ -70,36 +82,95 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
             setCopiedPlayerName(playerToCopy.getName().getString());
             setCopiedPlayerUUID(playerToCopy.getUuid());
         } else {
-            String fallbackName = getRandomFallbackName();
-            setCopiedPlayerName(fallbackName);
+            String name = getRandomSkinName();
+            setCopiedPlayerName(name);
             setCopiedPlayerUUID(UUID.randomUUID());
         }
-        this.setCustomNameVisible(true);
+        this.setCustomNameVisible(false);
     }
 
-    private String getRandomFallbackName() {
+    private String getRandomSkinName() {
         Random random = new Random();
-        if (random.nextFloat() < 0.03f) return "Caseoh";
-        String[] commonNames = {
-                "Verity", "Alex", "Kai", "Rex", "Mark", "Jade", "Sam", "Casey",
-                "Morgan", "Riley", "Jordan", "Avery", "Steve", "Yes", "Quinn",
-                "Blake", "Taylor", "Drew", "Skylar"
-        };
-        return commonNames[random.nextInt(commonNames.length)];
+        if (random.nextFloat() < 0.05f) {
+            return SPECIAL_NAMES[random.nextInt(SPECIAL_NAMES.length)];
+        }
+        return DEFAULT_NAMES[random.nextInt(DEFAULT_NAMES.length)];
     }
 
     public String getCopiedPlayerName() { return this.dataTracker.get(COPIED_PLAYER_NAME); }
-
     public void setCopiedPlayerName(String name) {
         this.dataTracker.set(COPIED_PLAYER_NAME, name);
         this.setCustomName(Text.literal(name));
-        this.setCustomNameVisible(true);
+        this.setCustomNameVisible(false);
     }
+
+    public boolean isSneaking() { return this.dataTracker.get(IS_SNEAKING); }
+    public void setSneaking(boolean sneaking) { this.dataTracker.set(IS_SNEAKING, sneaking); }
 
     public boolean isAggressive() { return this.dataTracker.get(IS_AGGRESSIVE); }
     public void setAggressive(boolean aggressive) { this.dataTracker.set(IS_AGGRESSIVE, aggressive); }
     public UUID getCopiedPlayerUUID() { return copiedPlayerUUID; }
     public void setCopiedPlayerUUID(UUID uuid) { this.copiedPlayerUUID = uuid; }
+
+    // =========================================
+    // AGGRESSION SYSTEM
+    // =========================================
+    public void playerNearby() {
+        if (this.isAggressive()) return;
+        proximityTicks++;
+        if (proximityTicks >= PROXIMITY_THRESHOLD) {
+            aggressionTimerCompleted = true;
+            if (new Random().nextFloat() < 0.5f) {
+                this.setAggressive(true);
+            }
+        }
+    }
+
+    public void playerFarAway() {
+        if (this.isAggressive()) return;
+        if (!aggressionTimerCompleted) {
+            proximityTicks = 0;
+        }
+        if (aggressionTimerCompleted) {
+            this.setAggressive(true);
+        }
+    }
+
+    public void resetProximity() {
+        if (!aggressionTimerCompleted && !this.isAggressive()) {
+            proximityTicks = 0;
+        }
+    }
+
+    // =========================================
+    // PROVOKE SYSTEM
+    // =========================================
+    private void onHitByPlayer() {
+        hitCount++;
+        hitTimer = HIT_WINDOW;
+        if (hitCount >= HITS_TO_PROVOKE) {
+            this.setAggressive(true);
+            hitCount = 0;
+            hitTimer = 0;
+        }
+    }
+
+    @Override
+    public boolean damage(DamageSource source, float amount) {
+        if (source.getAttacker() instanceof PlayerEntity) {
+            onHitByPlayer();
+        }
+        return super.damage(source, amount);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (hitTimer > 0) {
+            hitTimer--;
+            if (hitTimer <= 0) hitCount = 0;
+        }
+    }
 
     // =========================================
     // CHAT SYSTEM
@@ -109,26 +180,6 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
         String playerName = getCopiedPlayerName();
 
         if ("Verity".equals(playerName)) return getVerityResponse();
-        if ("Alex".equals(playerName)) {
-            if (containsAny(msg, "hi", "hello", "hey")) return "yo what's good";
-            if (containsAny(msg, "where", "lost")) return "no clue man, same here";
-            return pickRandom("yeah", "nah", "idk", "maybe later");
-        }
-        if ("Kai".equals(playerName)) {
-            if (containsAny(msg, "hear", "sound", "noise")) return "you heard that too? something is moving";
-            if (containsAny(msg, "scared", "afraid")) return "we need to keep moving, please";
-            return pickRandom("did you see that?", "shh, listen", "its close", "dont leave me alone");
-        }
-        if ("Rex".equals(playerName)) {
-            if (containsAny(msg, "fight", "kill", "attack")) return "i'd like to see you try";
-            if (containsAny(msg, "scared")) return "good, you should be";
-            return pickRandom("what do you want", "make it quick", "im not in the mood", "whatever");
-        }
-        if ("Mark".equals(playerName)) {
-            if (containsAny(msg, "help", "lost")) return "i can help, but there's a price";
-            if (containsAny(msg, "exit", "leave", "escape")) return "ive been here for years, theres no exit";
-            return pickRandom("i know a shortcut", "follow me", "trust me", "ive seen things here");
-        }
         if ("Caseoh".equals(playerName)) return getCaseohResponse(msg);
 
         if (containsAny(msg, "u good", "you good", "u ok", "you ok")) return pickRandom("yeah just tired", "im fine", "just watching");
@@ -138,6 +189,10 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
         if (containsAny(msg, "real", "fake")) return pickRandom("of course im real", "what kind of question is that");
         if (containsAny(msg, "help", "save")) return pickRandom("help isnt coming", "no one can save you");
         if (containsAny(msg, "who are you", "what are you")) return pickRandom("you know my name", "im " + playerName, "dont you recognize me");
+        if (containsAny(msg, "where", "exit", "lost")) return pickRandom("no clue man, same here", "ive been looking for hours", "there is no way out");
+        if (containsAny(msg, "scared", "afraid", "fear")) return pickRandom("you should be", "fear is smart", "it can smell fear");
+        if (containsAny(msg, "run")) return pickRandom("running wont help", "its faster than you", "keep running");
+        if (containsAny(msg, "hear", "sound", "noise")) return pickRandom("you heard that too?", "shh, listen", "it's getting closer");
 
         return pickRandom("hmm?", "what?", "yeah", "i dont know", "...", "maybe");
     }
@@ -160,8 +215,7 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
         if (containsAny(msg, "store", "shop", "market", "supermarket")) return "I wonder if my supermarket is in here";
         if (containsAny(msg, "hi", "hello", "hey")) return "Gahuk! Oh, hey there";
         return pickRandom("Gahuk", "I know where I'm going", "Chicken Alfredooooo", "I'm hungry",
-                "You met the backrooms specialist", "I wonder if my supermarket is in here",
-                "Um so there's that um... uh... tall entity, I think we should go to it");
+                "You met the backrooms specialist", "I wonder if my supermarket is in here");
     }
 
     private boolean containsAny(String message, String... keywords) {
@@ -171,33 +225,23 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
 
     private String pickRandom(String... options) { return options[new Random().nextInt(options.length)]; }
 
-    public void sendWhisper(PlayerEntity target) {
-        sendWhisper(target, null);
-    }
+    public void sendWhisper(PlayerEntity target) { sendWhisper(target, null); }
 
     public void sendWhisper(PlayerEntity target, String customMessage) {
         if (chatCooldown > 0) return;
-
         String playerName = getCopiedPlayerName();
         String msg;
-
         if (customMessage != null) {
             msg = customMessage;
         } else if ("Caseoh".equals(playerName)) {
-            String[] whispers = {"I think I saw a supermarket back there", "You ever had Chicken Alfredo in the backrooms?",
-                    "Gahuk... this place is huge", "I wonder if I can order some food here", "My back hurts from all this walking"};
-            msg = whispers[new Random().nextInt(whispers.length)];
+            msg = pickRandom("I think I saw a supermarket back there", "You ever had Chicken Alfredo in the backrooms?",
+                    "Gahuk... this place is huge", "I wonder if I can order some food here", "My back hurts from all this walking");
         } else {
-            String[] whispers = {"im right behind you", "dont turn around", "i see you",
+            msg = pickRandom("im right behind you", "dont turn around", "i see you",
                     "where are you going", "wait for me", "you dropped something",
-                    "its dark in here", "i dont like this place", "are we lost", "keep walking"};
-            msg = whispers[new Random().nextInt(whispers.length)];
+                    "its dark in here", "i dont like this place", "are we lost", "keep walking");
         }
-
-        Text whisper = Text.literal("<" + playerName + "> " + msg)
-                .formatted(Formatting.GRAY, Formatting.ITALIC);
-        target.sendMessage(whisper, false);
-
+        target.sendMessage(Text.literal("<" + playerName + "> " + msg).formatted(Formatting.GRAY, Formatting.ITALIC), false);
         chatCooldown = customMessage != null ? 60 : 200 + new Random().nextInt(400);
     }
 
@@ -224,29 +268,32 @@ public class MimicEntity extends HostileEntity implements GeoEntity {
 
     private PlayState movementController(AnimationState<MimicEntity> state) {
         if (this.isDead()) return PlayState.STOP;
-        state.setAnimation(RawAnimation.begin().thenLoop(state.isMoving() ? "animation.player.walk" : "animation.player.idle"));
+        if (isSneaking()) state.setAnimation(RawAnimation.begin().thenLoop("animation.player.sneak"));
+        else if (state.isMoving()) state.setAnimation(RawAnimation.begin().thenLoop("animation.player.walk"));
+        else state.setAnimation(RawAnimation.begin().thenLoop("animation.player.idle"));
         return PlayState.CONTINUE;
     }
 
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }
+    @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }
 
-    @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
+    @Override public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
         nbt.putString("CopiedPlayerName", getCopiedPlayerName());
         nbt.putBoolean("IsAggressive", isAggressive());
+        nbt.putBoolean("AggressionTimerCompleted", aggressionTimerCompleted);
+        nbt.putInt("ProximityTicks", proximityTicks);
         nbt.putInt("VerityMessageCount", verityMessageCount);
         if (copiedPlayerUUID != null) nbt.putUuid("CopiedUUID", copiedPlayerUUID);
     }
 
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
+    @Override public void readCustomDataFromNbt(NbtCompound nbt) {
         super.readCustomDataFromNbt(nbt);
         String name = nbt.getString("CopiedPlayerName");
-        if (name.isEmpty()) name = getRandomFallbackName();
+        if (name.isEmpty()) name = getRandomSkinName();
         setCopiedPlayerName(name);
         setAggressive(nbt.getBoolean("IsAggressive"));
+        aggressionTimerCompleted = nbt.getBoolean("AggressionTimerCompleted");
+        proximityTicks = nbt.getInt("ProximityTicks");
         verityMessageCount = nbt.getInt("VerityMessageCount");
         if (nbt.contains("CopiedUUID")) copiedPlayerUUID = nbt.getUuid("CopiedUUID");
     }

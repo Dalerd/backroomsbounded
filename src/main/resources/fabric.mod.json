@@ -16,6 +16,9 @@
 		],
 		"client": [
 			"net.dalerd.backroomsbounded.BackroomsBoundedClient"
+		],
+		"datagen": [
+			"net.dalerd.backroomsbounded.BackroomsBoundedDataGenerator"
 		]
 	},
 

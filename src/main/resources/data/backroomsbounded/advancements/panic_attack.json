@@ -1,0 +1,28 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:black_wool"
+    },
+    "title": {
+      "text": "Panic Attack"
+    },
+    "description": {
+      "text": "Experience a full sanity breakdown"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "parent": "backroomsbounded:root",
+  "criteria": {
+    "panic_attack": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["panic_attack"]
+  ],
+  "rewards": {
+    "experience": 100
+  }
+}

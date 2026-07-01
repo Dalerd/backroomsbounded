@@ -1,7 +1,9 @@
 package net.dalerd.backroomsbounded;
 
+import net.dalerd.backroomsbounded.advancement.AdvancementTriggerHandler;
 import net.dalerd.backroomsbounded.block.ModBlocks;
 import net.dalerd.backroomsbounded.block.entity.ModBlockEntities;
+import net.dalerd.backroomsbounded.command.LocateOfficeCommand;
 import net.dalerd.backroomsbounded.command.PanicCommand;
 import net.dalerd.backroomsbounded.config.BackroomsConfig;
 import net.dalerd.backroomsbounded.entity.ModEntities;
@@ -67,6 +69,7 @@ public class BackroomsBounded implements ModInitializer {
 		ChatResponseHandler.register();
 		ArmorDecayHandler.register();
 		AnvilRepairHandler.register();
+		AdvancementTriggerHandler.register();
 
 		ModEntities.registerEntities();
 
@@ -79,6 +82,11 @@ public class BackroomsBounded implements ModInitializer {
 		// Register panic command for testing
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			PanicCommand.register(dispatcher, registryAccess, environment);
+		});
+
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+			PanicCommand.register(dispatcher, registryAccess, environment);
+			LocateOfficeCommand.register(dispatcher, registryAccess, environment);
 		});
 
 		// Register server tick events

@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:sculk_shrieker"
+    },
+    "title": {
+      "text": "It Heard You"
+    },
+    "description": {
+      "text": "Trigger a bacteria shroom's defense mechanism"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "parent": "backroomsbounded:root",
+  "criteria": {
+    "trigger_shroom": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["trigger_shroom"]
+  ]
+}

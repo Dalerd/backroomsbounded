@@ -9,9 +9,8 @@ import net.minecraft.util.Identifier;
 
 public class MimicRenderer extends MobEntityRenderer<MimicEntity, PlayerEntityModel<MimicEntity>> {
 
-    private static final Identifier DEFAULT_SKIN = Identifier.of("minecraft", "textures/entity/player/wide/steve.png");
-
-    // Custom textures for special mimics
+    private static final Identifier STEVE_SKIN = Identifier.of("minecraft", "textures/entity/player/wide/steve.png");
+    private static final Identifier ALEX_SKIN = Identifier.of("minecraft", "textures/entity/player/wide/alex.png");
     private static final Identifier CASEOH_TEXTURE = Identifier.of("backroomsbounded", "textures/entity/mimic/caseoh.png");
     private static final Identifier VERITY_TEXTURE = Identifier.of("backroomsbounded", "textures/entity/mimic/verity.png");
     private static final Identifier AVERY_TEXTURE = Identifier.of("backroomsbounded", "textures/entity/mimic/averythemayo.png");
@@ -25,7 +24,7 @@ public class MimicRenderer extends MobEntityRenderer<MimicEntity, PlayerEntityMo
     public void render(MimicEntity entity, float yaw, float tickDelta, MatrixStack matrices,
                        VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
-        matrices.scale(0.98f, 0.98f, 0.98f);
+        matrices.scale(0.97f, 0.97f, 0.97f);
         super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);
         matrices.pop();
     }
@@ -33,14 +32,17 @@ public class MimicRenderer extends MobEntityRenderer<MimicEntity, PlayerEntityMo
     @Override
     public Identifier getTexture(MimicEntity entity) {
         String name = entity.getCopiedPlayerName();
-        if (name == null || name.isEmpty()) return DEFAULT_SKIN;
+        if (name == null || name.isEmpty()) return STEVE_SKIN;
 
-        // Custom textures for special mimics
         if (name.equals("Caseoh")) return CASEOH_TEXTURE;
         if (name.equals("Verity")) return VERITY_TEXTURE;
         if (name.equals("Avery")) return AVERY_TEXTURE;
 
-        // All other names use vanilla player skins
-        return Identifier.of("minecraft", "textures/entity/player/wide/" + name.toLowerCase() + ".png");
+        if (entity.getCopiedPlayerUUID() != null && !name.equals("Steve") && !name.equals("Alex")) {
+            return Identifier.of("minecraft", "textures/entity/player/wide/" + name.toLowerCase() + ".png");
+        }
+
+        if (name.equals("Alex")) return ALEX_SKIN;
+        return STEVE_SKIN;
     }
 }

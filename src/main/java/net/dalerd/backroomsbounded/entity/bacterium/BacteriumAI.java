@@ -56,6 +56,8 @@ public class BacteriumAI extends Goal {
     private int peekCooldown = 0;
     private int footstepCooldown = 0;
     private int breathingCooldown = 0;
+    private boolean isChasing = false;
+    private int failedPathfindAttempts = 0;
     private static final int MAX_DISTANCE_CHUNKS = 20;
 
     private BlockPos lastHeardSound = null;
@@ -123,9 +125,15 @@ public class BacteriumAI extends Goal {
         }
         lastPosition = bacterium.getBlockPos();
 
-        if (stuckTimer > 60 || stuckSpinCounter > 40) {
+        if (stuckTimer > 80 || stuckSpinCounter > 50) {
+            failedPathfindAttempts++;
             if (targetPlayer != null) {
-                teleportToObservePoint(targetPlayer);
+                if (failedPathfindAttempts > 3) {
+                    teleportToSafeChasePosition(targetPlayer);
+                    failedPathfindAttempts = 0;
+                } else {
+                    teleportToObservePoint(targetPlayer);
+                }
             } else if (isInvestigatingShroom) {
                 BlockPos suspicious = bacterium.getSuspiciousLocation();
                 if (suspicious != null && !suspicious.equals(BlockPos.ORIGIN)) {
@@ -143,6 +151,17 @@ public class BacteriumAI extends Goal {
         if (randomAppearCooldown <= 0) tryRandomAppearance();
 
         targetPlayer = findNearestPlayer();
+
+        // Apply darkness to players within 32 blocks
+        if (targetPlayer != null) {
+            double distance = bacterium.squaredDistanceTo(targetPlayer);
+            if (distance < 1024) { // 32 blocks squared = 1024
+                if (targetPlayer instanceof ServerPlayerEntity sp) {
+                    sp.addStatusEffect(new StatusEffectInstance(
+                            StatusEffects.DARKNESS, 40, 0, false, false));
+                }
+            }
+        }
 
         // =========================================
         // SHROOM DETECTION
@@ -170,7 +189,8 @@ public class BacteriumAI extends Goal {
 
         if (targetPlayer == null) {
             bacterium.setCheckingLocker(false); bacterium.setRunning(false); bacterium.setSprintBoost(false);
-            wasRunning = false; isObserving = false; isStalking = false; wanderAround(); return;
+            wasRunning = false; isObserving = false; isStalking = false; isChasing = false; failedPathfindAttempts = 0;
+            wanderAround(); return;
         }
 
         double distance = bacterium.squaredDistanceTo(targetPlayer);
@@ -180,7 +200,7 @@ public class BacteriumAI extends Goal {
         float learningAggression = getLearningAggressionMultiplier() * diffMult;
         boolean isSneaking = targetPlayer.isSneaking();
 
-        updateCrouchState();
+        // Crouch is now handled by BacteriumEntity.updateCrouchForSpace() every 10 ticks
 
         if (existenceTicks % 40 == 0) scanForPlayerActivity();
 
@@ -210,91 +230,82 @@ public class BacteriumAI extends Goal {
         if (scentTrackingTimer > 0 && !canSmell && !canHear) { followScentTrail(); return; }
         if (!canSmell && !canHear && scentTrackingTimer <= 0) {
             bacterium.setRunning(false); bacterium.setSprintBoost(false);
-            isObserving = false; isStalking = false; wanderAround(); checkNearbyLockers(); return;
+            isObserving = false; isStalking = false; isChasing = false; failedPathfindAttempts = 0;
+            wanderAround(); checkNearbyLockers(); return;
         }
 
         float scentBonus = (scentTrackingTimer > 0 && (lastSmelledLoot != null || lastHeardSound != null)) ? 1.8f : 1.0f;
-        if (stuckTimer > 40) { teleportToObservePoint(targetPlayer); stuckTimer = 0; return; }
 
         boolean playerLooking = isPlayerLookingAt(targetPlayer);
         boolean pathClear = hasClearPath(targetPlayer);
 
-        // =========================================
-        // ENHANCED STALKING MODE
-        // =========================================
-        if (!isStalking && !isObserving && pathClear && distance > 64 && distance < 576 && !playerLooking && random.nextFloat() < 0.08f) {
-            startStalking(targetPlayer);
-        }
+        // Only stalk/observe when NOT actively chasing
+        if (!isChasing) {
+            if (!isStalking && !isObserving && distance > 144 && distance < 900 && !playerLooking && random.nextFloat() < 0.04f) {
+                startStalking(targetPlayer);
+            }
 
-        if (isStalking) {
-            stalkTimer--;
-            if (distance < 16 || (playerLooking && distance < 64)) {
-                isStalking = false;
-                isObserving = false;
-                stalkTimer = 0;
-                bacterium.getWorld().playSound(null, bacterium.getBlockPos(),
-                        ModSounds.BACTERIUM_ROAR, SoundCategory.HOSTILE, 1.5f, 0.5f);
-                runToPlayer();
-                trySprintBoost(panic);
+            if (isStalking) {
+                stalkTimer--;
+                if (distance < 16 || (playerLooking && distance < 64)) {
+                    isStalking = false; isObserving = false; stalkTimer = 0;
+                    bacterium.getWorld().playSound(null, bacterium.getBlockPos(),
+                            ModSounds.BACTERIUM_ROAR, SoundCategory.HOSTILE, 1.5f, 0.5f);
+                    isChasing = true;
+                    runToPlayer(); trySprintBoost(panic);
+                    return;
+                }
+                if (stalkTimer <= 0) { isStalking = false; stalkTimer = 0; isChasing = true; runToPlayer(); return; }
+                stalkPlayer(targetPlayer, distance, playerLooking);
                 return;
             }
-            if (stalkTimer <= 0) {
-                isStalking = false;
-                stalkTimer = 0;
-                runToPlayer();
-                return;
-            }
-            stalkPlayer(targetPlayer, distance, playerLooking);
-            return;
-        }
 
-        // =========================================
-        // OBSERVE MODE
-        // =========================================
-        if (isObserving && observingTimer <= 0) {
-            if (distance > 144 && distance < 576 && !playerLooking) {
-                bacterium.setRunning(false);
-                bacterium.getLookControl().lookAt(targetPlayer);
-                if (random.nextFloat() < 0.02f) teleportToObservePoint(targetPlayer);
-                observingTimer = 30;
-                return;
-            } else {
-                isObserving = false;
+            if (isObserving && observingTimer <= 0) {
+                if (distance > 144 && distance < 576 && !playerLooking) {
+                    bacterium.setRunning(false);
+                    bacterium.getLookControl().lookAt(targetPlayer);
+                    if (random.nextFloat() < 0.02f) teleportToObservePoint(targetPlayer);
+                    observingTimer = 30;
+                    return;
+                } else { isObserving = false; }
             }
         }
 
-        if (!isObserving && !pathClear && distance > 144 && distance < 576 && !playerLooking && random.nextFloat() < 0.15f) {
-            isObserving = true;
-            teleportToObservePoint(targetPlayer);
-            observingTimer = 60;
-            return;
-        }
-
-        if (bacterium.canBreakBlocks()) {
-            if (!pathClear && bacterium.isRunning()) breakBlocksInPath();
-            if (bacterium.horizontalCollision) breakBlockInFront();
-            if (existenceTicks % 20 == 0 && targetPlayer != null && !pathClear) breakBlocksInPath();
-        }
-
-        if (pathClear) {
+        // =========================================
+        // CHASE / HUNTING BEHAVIOR
+        // =========================================
+        if (distance < 400 || isChasing) {
+            isChasing = true;
             isObserving = false;
             isStalking = false;
-            runToPlayer(); trySprintBoost(panic);
-        }
-        else if (!playerLooking && teleportCooldown <= 0 && distance > 25) {
-            teleportScareAttack(targetPlayer);
-            teleportCooldown = 150;
-        }
-        else if (isFullyLearned() && !pathClear) { teleportToObservePoint(targetPlayer); }
-        else { navigateAroundObstacle(); }
 
-        if (distance > 625) {
-            float hunterChance = getHunterChance(panic) * learningAggression * darkMult * scentBonus;
-            if (random.nextFloat() > Math.min(hunterChance, 0.95f)) {
-                bacterium.setRunning(false); bacterium.setSprintBoost(false);
-                if (teleportCooldown <= 0 && !playerLooking) { teleportToRandomLocation(); teleportCooldown = 200; }
+            if (pathClear) {
+                failedPathfindAttempts = 0;
+                runToPlayer(); trySprintBoost(panic);
+            } else {
+                failedPathfindAttempts++;
+
+                if (bacterium.canBreakBlocks()) {
+                    breakBlocksInPath();
+                    if (bacterium.horizontalCollision) breakBlockInFront();
+                }
+
+                navigateAroundObstacle();
+
+                if (failedPathfindAttempts > 8 && teleportCooldown <= 0) {
+                    teleportToSafeChasePosition(targetPlayer);
+                    teleportCooldown = 150;
+                    failedPathfindAttempts = 0;
+                }
+            }
+        } else {
+            isChasing = false;
+            if (distance > 625 && teleportCooldown <= 0 && !playerLooking) {
+                teleportToSafeChasePosition(targetPlayer);
+                teleportCooldown = 200;
             }
         }
+
         if (teleportCooldown <= 0 && !playerLooking && distance > 64) {
             teleportScareAttack(targetPlayer);
             teleportCooldown = 200;
@@ -304,7 +315,7 @@ public class BacteriumAI extends Goal {
         if (Math.abs(targetPlayer.getY() - bacterium.getY()) > 8) {
             if (random.nextFloat() < floorChance * darkMult) {
                 bacterium.setRunning(false); bacterium.setSprintBoost(false);
-                isObserving = false; isStalking = false; teleportToPlayerFloor(); return;
+                teleportToPlayerFloor(); return;
             }
         }
 
@@ -312,8 +323,6 @@ public class BacteriumAI extends Goal {
 
         double attackRange = isFullyLearned() ? 4 : 3;
         if (distance < (attackRange * attackRange) && attackCooldown <= 0) {
-            isObserving = false;
-            isStalking = false;
             if (isPlayerInLocker()) {
                 bacterium.setRunning(false); bacterium.setSprintBoost(false); handleLockerInteraction();
             } else {
@@ -323,12 +332,43 @@ public class BacteriumAI extends Goal {
     }
 
     // =========================================
+    // SMART TELEPORT
+    // =========================================
+    private void teleportToSafeChasePosition(PlayerEntity player) {
+        Vec3d lookVec = player.getRotationVec(1.0f);
+        BlockPos targetPos = player.getBlockPos().add((int)(lookVec.x * 8), 0, (int)(lookVec.z * 8));
+
+        for (int attempt = 0; attempt < 15; attempt++) {
+            BlockPos checkPos = targetPos.add(random.nextInt(8)-4, 0, random.nextInt(8)-4);
+            BlockPos safePos = findSafePosition(checkPos);
+            if (safePos != null) {
+                int openSides = 0;
+                for (var dir : new BlockPos[]{safePos.north(), safePos.south(), safePos.east(), safePos.west()}) {
+                    BlockState s = bacterium.getWorld().getBlockState(dir);
+                    if (!s.isSolid() || (bacterium.isCrouching() && !bacterium.getWorld().getBlockState(dir.up()).isSolid())) {
+                        openSides++;
+                    }
+                }
+                if (openSides >= 2) {
+                    teleportBacterium(new BlockPos(safePos.getX(), player.getBlockY(), safePos.getZ()));
+                    bacterium.setRunning(true);
+                    bacterium.getNavigation().startMovingTo(player, 1.2);
+                    return;
+                }
+            }
+        }
+        teleportToObservePoint(player);
+    }
+
+    // =========================================
     // ENHANCED STALKING SYSTEM
     // =========================================
     private void startStalking(PlayerEntity player) {
+        if (isPlayerCornered(player)) return;
         isStalking = true;
         isObserving = false;
-        stalkTimer = 600 + random.nextInt(600);
+        isChasing = false;
+        stalkTimer = 800 + random.nextInt(800);
         stalkPosition = null;
         peekCooldown = 0;
         footstepCooldown = 0;
@@ -336,6 +376,15 @@ public class BacteriumAI extends Goal {
         bacterium.setRunning(false);
         bacterium.setSprintBoost(false);
         teleportToStalkPosition(player);
+    }
+
+    private boolean isPlayerCornered(PlayerEntity player) {
+        BlockPos pp = player.getBlockPos();
+        int solidSides = 0;
+        for (var dir : new BlockPos[]{pp.north(), pp.south(), pp.east(), pp.west()}) {
+            if (bacterium.getWorld().getBlockState(dir).isSolid()) solidSides++;
+        }
+        return solidSides >= 3;
     }
 
     private void stalkPlayer(PlayerEntity player, double distance, boolean playerLooking) {
@@ -406,12 +455,11 @@ public class BacteriumAI extends Goal {
 
     private void teleportToStalkPosition(PlayerEntity player) {
         int angle = random.nextInt(360);
-        int dist = 20 + random.nextInt(11); // 20-30 blocks away
+        int dist = 20 + random.nextInt(11);
         double rad = Math.toRadians(angle);
         int offsetX = (int)(Math.cos(rad) * dist);
         int offsetZ = (int)(Math.sin(rad) * dist);
         BlockPos targetPos = player.getBlockPos().add(offsetX, 0, offsetZ);
-        // Find position with good cover but also a clear view of the player
         for (int attempt = 0; attempt < 15; attempt++) {
             BlockPos checkPos = targetPos.add(random.nextInt(10)-5, 0, random.nextInt(10)-5);
             BlockPos safePos = findSafePosition(checkPos);
@@ -421,7 +469,6 @@ public class BacteriumAI extends Goal {
                 for (var dir : new BlockPos[]{checkPos.north(), checkPos.south(), checkPos.east(), checkPos.west()}) {
                     if (bacterium.getWorld().getBlockState(dir).isSolid()) coverScore++;
                 }
-                // Check if there's at least partial line of sight to player
                 BlockPos midPoint = new BlockPos(
                         (safePos.getX() + player.getBlockX()) / 2, player.getBlockY(),
                         (safePos.getZ() + player.getBlockZ()) / 2);
@@ -455,10 +502,16 @@ public class BacteriumAI extends Goal {
                 if (bacterium.getWorld().getBlockState(midPoint).isSolid()) {
                     BlockPos safePos = findSafePosition(checkPos);
                     if (safePos != null) {
-                        teleportBacterium(new BlockPos(safePos.getX(), player.getBlockY(), safePos.getZ()));
-                        bacterium.getWorld().playSound(null, safePos,
-                                SoundEvents.ENTITY_ENDERMAN_STARE, SoundCategory.HOSTILE, 0.3f, 0.3f);
-                        return;
+                        int openSides = 0;
+                        for (var dir : new BlockPos[]{safePos.north(), safePos.south(), safePos.east(), safePos.west()}) {
+                            if (!bacterium.getWorld().getBlockState(dir).isSolid()) openSides++;
+                        }
+                        if (openSides >= 1) {
+                            teleportBacterium(new BlockPos(safePos.getX(), player.getBlockY(), safePos.getZ()));
+                            bacterium.getWorld().playSound(null, safePos,
+                                    SoundEvents.ENTITY_ENDERMAN_STARE, SoundCategory.HOSTILE, 0.3f, 0.3f);
+                            return;
+                        }
                     }
                 }
             }
@@ -496,18 +549,7 @@ public class BacteriumAI extends Goal {
         }
     }
 
-    // =========================================
-    // CROUCHING SYSTEM
-    // =========================================
-    private void updateCrouchState() {
-        BlockPos abovePos = bacterium.getBlockPos().up(2);
-        BlockState aboveState = bacterium.getWorld().getBlockState(abovePos);
-        if (aboveState.isSolid() || !bacterium.getWorld().getBlockState(abovePos.up()).isAir()) {
-            bacterium.setCrouching(true);
-        } else {
-            bacterium.setCrouching(false);
-        }
-    }
+    // REMOVED: updateCrouchState() - now handled by BacteriumEntity.updateCrouchForSpace()
 
     private int applyLeatherArmorSmellBoost(PlayerEntity player, int baseRange) {
         int leatherPieces = 0;
@@ -600,10 +642,15 @@ public class BacteriumAI extends Goal {
             if (Math.abs(pp.getX() - cp.getX()) > Math.abs(pp.getZ() - cp.getZ())) cp = cp.add(dx, 0, 0);
             else cp = cp.add(0, 0, dz);
             BlockState s = bacterium.getWorld().getBlockState(cp);
-            boolean canFit = !s.isSolid() || (bacterium.isCrouching() && !bacterium.getWorld().getBlockState(cp.up()).isSolid());
+            // When crouching, 2-block spaces are passable
+            boolean canFit = !s.isSolid() || (bacterium.isCrouching() &&
+                    !bacterium.getWorld().getBlockState(cp.up()).isSolid());
             if (bacterium.canBreakBlocks() && !isNaturalBackroomsBlock(s) && s.isSolid()) continue;
             if (s.isSolid() && !canFit) return false;
-            if (!bacterium.isCrouching() && (bacterium.getWorld().getBlockState(cp.up()).isSolid() || bacterium.getWorld().getBlockState(cp.up(2)).isSolid())) return false;
+            if (!bacterium.isCrouching()) {
+                if (bacterium.getWorld().getBlockState(cp.up()).isSolid() ||
+                        bacterium.getWorld().getBlockState(cp.up(2)).isSolid()) return false;
+            }
         }
         return true;
     }
@@ -616,19 +663,20 @@ public class BacteriumAI extends Goal {
                 bacterium.getBlockPos().add(-Integer.signum(dx), 0, Integer.signum(dz)),
                 bacterium.getBlockPos().add(Integer.signum(dx), 0, -Integer.signum(dz)),
                 bacterium.getBlockPos().add(Integer.signum(dx), 0, Integer.signum(dz)),
+                bacterium.getBlockPos().add(-Integer.signum(dx), 0, -Integer.signum(dz)),
+                bacterium.getBlockPos().add(Integer.signum(dx), 0, Integer.signum(dz)),
                 bacterium.getBlockPos().add(-Integer.signum(dx), 0, -Integer.signum(dz))
         };
         for (BlockPos tryPos : tries) {
             BlockState state = bacterium.getWorld().getBlockState(tryPos);
-            boolean canFit = !state.isSolid() || (bacterium.isCrouching() && !bacterium.getWorld().getBlockState(tryPos.up()).isSolid());
+            boolean canFit = !state.isSolid() || (bacterium.isCrouching() &&
+                    !bacterium.getWorld().getBlockState(tryPos.up()).isSolid());
             if (canFit || (bacterium.canBreakBlocks() && !isNaturalBackroomsBlock(state))) {
                 bacterium.getNavigation().startMovingTo(tryPos.getX(), tryPos.getY(), tryPos.getZ(), 1.0);
                 bacterium.getLookControl().lookAt(targetPlayer);
                 return;
             }
         }
-        teleportToObservePoint(targetPlayer);
-        bacterium.getLookControl().lookAt(targetPlayer);
     }
 
     private void wanderAround() {
@@ -832,11 +880,34 @@ public class BacteriumAI extends Goal {
     }
 
     private void shakeLocker() { BlockPos p = targetPlayer.getBlockPos(); bacterium.getWorld().playSound(null, p, SoundEvents.BLOCK_IRON_DOOR_OPEN, SoundCategory.HOSTILE, 1.0f, 0.5f); bacterium.swingHand(net.minecraft.util.Hand.MAIN_HAND); bacterium.incrementBlocksBroken(); }
-    private void breakLocker() { BlockPos p = targetPlayer.getBlockPos(); bacterium.getWorld().breakBlock(p, true); bacterium.getWorld().playSound(null, p, SoundEvents.ENTITY_IRON_GOLEM_DEATH, SoundCategory.HOSTILE, 1.0f, 1.0f); bacterium.swingHand(net.minecraft.util.Hand.MAIN_HAND); bacterium.incrementBlocksBroken(); }
+    private void breakLocker() {
+        BlockPos p = targetPlayer.getBlockPos();
+        // Break both halves of the locker
+        BlockState state = bacterium.getWorld().getBlockState(p);
+        BlockState aboveState = bacterium.getWorld().getBlockState(p.up());
+
+        // Break the half the player is in
+        if (state.getBlock().getTranslationKey().contains("locker")) {
+            bacterium.getWorld().breakBlock(p, true);
+        }
+        // Break the half above (if it exists)
+        if (aboveState.getBlock().getTranslationKey().contains("locker")) {
+            bacterium.getWorld().breakBlock(p.up(), true);
+        }
+        // Also check below (player might be in top half)
+        BlockState belowState = bacterium.getWorld().getBlockState(p.down());
+        if (belowState.getBlock().getTranslationKey().contains("locker")) {
+            bacterium.getWorld().breakBlock(p.down(), true);
+        }
+
+        bacterium.getWorld().playSound(null, p, SoundEvents.ENTITY_IRON_GOLEM_DEATH, SoundCategory.HOSTILE, 1.0f, 1.0f);
+        bacterium.swingHand(net.minecraft.util.Hand.MAIN_HAND);
+        bacterium.incrementBlocksBroken();
+    }
     private void checkNearbyLockers() { BlockPos bp = bacterium.getBlockPos(); for (int dx = -5; dx <= 5; dx++) for (int dz = -5; dz <= 5; dz++) { BlockPos p = bp.add(dx, 0, dz); if (bacterium.getWorld().getBlockState(p).getBlock().getTranslationKey().contains("locker")) { bacterium.getNavigation().startMovingTo(p.getX(), p.getY(), p.getZ(), 0.8); bacterium.setCheckingLocker(true); return; } } bacterium.setCheckingLocker(false); }
 
     // =========================================
-    // ATTACK - Regular hit OR grab at close range
+    // ATTACK
     // =========================================
     private void attackPlayer() {
         if (targetPlayer == null) return;
@@ -845,13 +916,11 @@ public class BacteriumAI extends Goal {
 
         double distance = bacterium.squaredDistanceTo(targetPlayer);
 
-        // Within 2 blocks = GRAB ATTACK
         if (distance < 4 && random.nextFloat() < BackroomsConfig.getInstance().bacteriumGrabChance) {
             startGrabAttack(targetPlayer);
             return;
         }
 
-        // Regular hit
         float damagePerHit = switch (bacterium.getWorld().getDifficulty()) {
             case EASY, NORMAL -> BackroomsConfig.getInstance().bacteriumDamageEasyNormal;
             case HARD -> BackroomsConfig.getInstance().bacteriumDamageHard;
@@ -862,30 +931,21 @@ public class BacteriumAI extends Goal {
         attackCooldown = 20;
     }
 
-    // =========================================
-    // GRAB ATTACK SYSTEM
-    // =========================================
     private void startGrabAttack(PlayerEntity player) {
         bacterium.startGrabbing(player);
         bacterium.getWorld().playSound(null, bacterium.getBlockPos(),
                 ModSounds.BACTERIUM_ROAR, SoundCategory.HOSTILE, 2.0f, 0.3f);
-
-        // Spawn dark particles around the grab
         if (bacterium.getWorld() instanceof ServerWorld sw) {
             spawnEmergenceParticles(sw, bacterium.getBlockPos());
         }
     }
 
     public static void spawnEmergenceParticles(ServerWorld world, BlockPos pos) {
-        // Spawn dark particles rising from the ground like warden emergence
         for (int i = 0; i < 30; i++) {
             double x = pos.getX() + 0.5 + (world.random.nextDouble() - 0.5) * 2;
             double y = pos.getY() + world.random.nextDouble() * 3;
             double z = pos.getZ() + 0.5 + (world.random.nextDouble() - 0.5) * 2;
-            world.spawnParticles(
-                    net.minecraft.particle.ParticleTypes.SCULK_SOUL,
-                    x, y, z, 1, 0, 0.1, 0, 0.02
-            );
+            world.spawnParticles(net.minecraft.particle.ParticleTypes.SCULK_SOUL, x, y, z, 1, 0, 0.1, 0, 0.02);
         }
     }
 }

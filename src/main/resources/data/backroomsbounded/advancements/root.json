@@ -1,0 +1,28 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:yellow_terracotta"
+    },
+    "title": {
+      "text": "The Backrooms"
+    },
+    "description": {
+      "text": "You've nocliped out of reality"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "background": "minecraft:textures/block/yellow_terracotta.png"
+  },
+  "criteria": {
+    "enter_backrooms": {
+      "trigger": "minecraft:changed_dimension",
+      "conditions": {
+        "to": "backroomsbounded:backrooms"
+      }
+    }
+  },
+  "requirements": [
+    ["enter_backrooms"]
+  ]
+}

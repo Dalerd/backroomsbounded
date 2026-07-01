@@ -1,0 +1,33 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:water_bucket"
+    },
+    "title": {
+      "text": "Stay Hydrated"
+    },
+    "description": {
+      "text": "Find a water cooler"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "parent": "backroomsbounded:enter_office",
+  "criteria": {
+    "use_water_cooler": {
+      "trigger": "minecraft:item_used_on_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:block",
+            "block": "backroomsbounded:water_cooler"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    ["use_water_cooler"]
+  ]
+}

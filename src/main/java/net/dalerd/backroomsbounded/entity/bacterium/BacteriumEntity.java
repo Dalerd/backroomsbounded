@@ -1,7 +1,9 @@
 package net.dalerd.backroomsbounded.entity.bacterium;
 
+import net.dalerd.backroomsbounded.advancement.AdvancementTriggerHandler;
 import net.dalerd.backroomsbounded.config.BackroomsConfig;
 import net.dalerd.backroomsbounded.entity.ModEntities;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -18,6 +20,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -40,6 +43,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
     private int grabTimer = 0;
     public int escapeClicks = 0;
     private boolean grabKillTriggered = false;
+    private boolean advancementGranted = false; // Track if advancement was already granted for this grab
 
     private static final TrackedData<Integer> LEARNING_LEVEL =
             DataTracker.registerData(BacteriumEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -61,6 +65,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
     private int blocksPlacedByPlayer = 0;
     private int doorsOpened = 0;
     private int lockersOpened = 0;
+    private int dimensionCheckCooldown = 0;
 
     public BacteriumEntity(EntityType<? extends HostileEntity> entityType, World world) {
         super(entityType, world);
@@ -97,7 +102,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
     }
 
     // =========================================
-    // DIMENSIONS - Allow fitting in 2-block spaces
+    // DIMENSIONS & CROUCHING
     // =========================================
     @Override
     public void setPose(EntityPose pose) {
@@ -107,10 +112,56 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
 
     @Override
     public float getStepHeight() {
-        if (this.isCrouching()) {
-            return 0.6f; // Standard step height for 1.8 tall entities
+        return 0.6f;
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        // Periodically update crouch state based on available space
+        dimensionCheckCooldown--;
+        if (dimensionCheckCooldown <= 0) {
+            dimensionCheckCooldown = 10;
+            updateCrouchForSpace();
         }
-        return super.getStepHeight();
+
+        // Handle grab timer
+        if (isGrabbing() && grabbedPlayer != null && !this.getWorld().isClient) {
+            grabTimer++;
+            double holdY = this.getY() + 1.5;
+            grabbedPlayer.refreshPositionAndAngles(this.getX(), holdY, this.getZ(),
+                    grabbedPlayer.getYaw(), grabbedPlayer.getPitch());
+            grabbedPlayer.setVelocity(0, 0, 0);
+            grabbedPlayer.velocityModified = true;
+            if (grabbedPlayer instanceof ServerPlayerEntity sp) {
+                sp.addStatusEffect(new StatusEffectInstance(StatusEffects.DARKNESS, 20, 0, false, false));
+                sp.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 20, 0, false, false));
+            }
+            int grabDurationTicks = CONFIG.bacteriumGrabDurationSeconds * 20;
+            if (grabTimer >= grabDurationTicks && !grabKillTriggered) {
+                grabKillTriggered = true;
+                grabbedPlayer.damage(this.getDamageSources().mobAttack(this), Float.MAX_VALUE);
+                stopGrabbing();
+            }
+        }
+    }
+
+    private void updateCrouchForSpace() {
+        if (this.isGrabbing()) return;
+
+        BlockPos pos = this.getBlockPos();
+        BlockState aboveState2 = this.getWorld().getBlockState(pos.up(2));
+        BlockState aboveState3 = this.getWorld().getBlockState(pos.up(3));
+
+        boolean ceilingLow = aboveState2.isSolid() || !this.getWorld().getBlockState(pos.up(2)).isAir();
+        boolean hasFullRoom = !aboveState3.isSolid() && this.getWorld().getBlockState(pos.up(2)).isAir();
+
+        if (ceilingLow && !this.isCrouching()) {
+            this.setCrouching(true);
+        } else if (hasFullRoom && this.isCrouching()) {
+            this.setCrouching(false);
+        }
     }
 
     // =========================================
@@ -125,6 +176,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
         this.grabTimer = 0;
         this.escapeClicks = 0;
         this.grabKillTriggered = false;
+        this.advancementGranted = false; // Reset advancement flag for new grab
         this.setGrabbing(true);
         this.setJumpscaring(true);
         this.setVelocity(0, 0, 0);
@@ -140,6 +192,15 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
         this.setGrabbing(false);
         this.setJumpscaring(false);
         if (wasGrabbed != null) {
+            // Grant advancement if player survived (health < 10 and not killed)
+            if (wasGrabbed instanceof ServerPlayerEntity sp && wasGrabbed.isAlive() && !this.advancementGranted) {
+                float health = sp.getHealth();
+                if (health < 10.0f) {
+                    AdvancementTriggerHandler.onSurviveBacteriumGrab(sp);
+                    this.advancementGranted = true;
+                }
+            }
+
             wasGrabbed.setVelocity(
                     (this.getX() - wasGrabbed.getX()) * 0.5,
                     0.3,
@@ -154,29 +215,6 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
         escapeClicks++;
         if (escapeClicks >= CONFIG.bacteriumGrabEscapeClicks) {
             stopGrabbing();
-        }
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-
-        if (isGrabbing() && grabbedPlayer != null && !this.getWorld().isClient) {
-            grabTimer++;
-            double holdY = this.getY() + 1.5;
-            grabbedPlayer.refreshPositionAndAngles(this.getX(), holdY, this.getZ(), grabbedPlayer.getYaw(), grabbedPlayer.getPitch());
-            grabbedPlayer.setVelocity(0, 0, 0);
-            grabbedPlayer.velocityModified = true;
-            if (grabbedPlayer instanceof ServerPlayerEntity sp) {
-                sp.addStatusEffect(new StatusEffectInstance(StatusEffects.DARKNESS, 20, 0, false, false));
-                sp.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 20, 0, false, false));
-            }
-            int grabDurationTicks = CONFIG.bacteriumGrabDurationSeconds * 20;
-            if (grabTimer >= grabDurationTicks && !grabKillTriggered) {
-                grabKillTriggered = true;
-                grabbedPlayer.damage(this.getDamageSources().mobAttack(this), Float.MAX_VALUE);
-                stopGrabbing();
-            }
         }
     }
 
@@ -198,7 +236,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
         if (this.dataTracker.get(CROUCHING) != c) {
             this.dataTracker.set(CROUCHING, c);
             this.setPose(c ? EntityPose.CROUCHING : EntityPose.STANDING);
-            this.calculateDimensions(); // Force hitbox recalculation
+            this.calculateDimensions();
             updateSpeed();
         }
     }
@@ -276,6 +314,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
         super.writeCustomDataToNbt(nbt);
         nbt.putInt("DoorsOpened", doorsOpened); nbt.putInt("LockersOpened", lockersOpened);
         nbt.putInt("BlocksPlaced", blocksPlacedByPlayer); nbt.putInt("LearningLevel", getLearningLevel());
+        nbt.putBoolean("AdvancementGranted", advancementGranted);
         BlockPos s = getSuspiciousLocation();
         nbt.putInt("SuspiciousX", s.getX()); nbt.putInt("SuspiciousY", s.getY()); nbt.putInt("SuspiciousZ", s.getZ());
     }
@@ -285,6 +324,7 @@ public class BacteriumEntity extends HostileEntity implements GeoEntity {
         doorsOpened = nbt.getInt("DoorsOpened"); lockersOpened = nbt.getInt("LockersOpened");
         blocksPlacedByPlayer = nbt.getInt("BlocksPlaced");
         this.dataTracker.set(LEARNING_LEVEL, nbt.getInt("LearningLevel"));
+        advancementGranted = nbt.getBoolean("AdvancementGranted");
         if (nbt.contains("SuspiciousX"))
             this.dataTracker.set(SUSPICIOUS_LOCATION, new BlockPos(nbt.getInt("SuspiciousX"), nbt.getInt("SuspiciousY"), nbt.getInt("SuspiciousZ")));
     }

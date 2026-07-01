@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:white_concrete"
+    },
+    "title": {
+      "text": "Corporate Hell"
+    },
+    "description": {
+      "text": "Enter the endless office complex"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "parent": "backroomsbounded:root",
+  "criteria": {
+    "enter_office": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["enter_office"]
+  ]
+}
